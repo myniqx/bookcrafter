@@ -1,5 +1,5 @@
 "use client"
-import type React from "react"
+import React, { Usable } from "react"
 import { SidebarNavigation } from "@/components/sidebar-navigation"
 import { ProjectProvider } from "@/providers/project-provider"
 
@@ -8,9 +8,9 @@ export default function ProjectLayout({
   params,
 }: {
   children: React.ReactNode,
-  params: { slug: string }
+    params: Usable<{ slug: string }>
 }) {
-  const { slug } = params
+  const { slug } = React.use(params)
   return (
     <ProjectProvider projectId={slug}>
       <div className="flex min-h-screen">

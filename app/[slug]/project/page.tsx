@@ -261,10 +261,7 @@ export default function ProjectPage() {
   const entityType = (searchParams.get("type") as EntityType) || "character"
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="p-4 border-b">
-        <ProjectHeader />
-      </div>
+    <>
 
       <div className="flex-1 overflow-auto p-4">
         <Tabs
@@ -278,11 +275,11 @@ export default function ProjectPage() {
               if (!params.has("type")) {
                 params.set("type", "character")
               }
-            } else {
+            } else if (value !== 'images') {
               params.delete("tab")
               params.delete("type")
             }
-            router.push(`/project/${project.id}?${params.toString()}`)
+            router.push(`/${project.slug}/project?${params.toString()}`)
           }}
           className="w-full"
         >
@@ -338,6 +335,7 @@ export default function ProjectPage() {
       />
 
       <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} project={project} />
-    </div>
+
+    </>
   )
 }
