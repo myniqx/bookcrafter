@@ -24,7 +24,7 @@ export function BookHeader({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Link href={`/project/${projectId}`}>
+        <Link href={`/${projectId}/project`}>
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
             <span className="sr-only">Geri</span>

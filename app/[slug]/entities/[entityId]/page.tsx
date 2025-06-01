@@ -17,6 +17,7 @@ import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
 import { EditableText } from "@/components/editable-text"
 import { useAutosave } from "@/hooks/use-autosave"
 import type { EntityProperty, Note } from "@/lib/types"
+import { goToProject } from "@/lib/utils/navigateTo"
 
 export default function EntityPage({
   params,
@@ -62,7 +63,7 @@ export default function EntityPage({
   const entity = project.entities.find((e) => e.id === params.entityId)
 
   if (!entity) {
-    router.push(`/project/${params.id}`)
+    goToProject(params.id, router)
     return null
   }
 

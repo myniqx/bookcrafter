@@ -1,21 +1,16 @@
 "use client"
 
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download } from "lucide-react"
-import type { Project } from "@/lib/types"
-import { EditableText } from "./editable-text"
-import { useState } from "react"
-import { ExportDialog } from "./export-dialog"
 import { useProject } from "@/providers/project-provider"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { EditableText } from "./editable-text"
 
 
 export function ProjectHeader() {
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
-  const { project, hasUnsavedChanges, updateProject } = useProject()
+  const { project, hasUnsavedChanges, updateProject, saveProject } = useProject()
 
-  if(!project) return null
-
+  if (!project) return null
   const onNameChange = (name: string) => {
     updateProject({ ...project, name })
   }
@@ -52,17 +47,8 @@ export function ProjectHeader() {
             />
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsExportDialogOpen(true)}
-          className="rounded-full"
-          title="Projeyi Export Et"
-        >
-          <Download className="h-4 w-4" />
-        </Button>
+
       </div>
-      <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} project={project} />
     </div>
   )
 }

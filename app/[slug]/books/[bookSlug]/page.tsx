@@ -1,28 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { BookHeader } from "@/components/book-header"
 import { ChapterList } from "@/components/chapter-list"
 import { CreateChapterDialog } from "@/components/create-chapter-dialog"
-import { useProject } from "@/hooks/use-project"
-import type { Chapter, Entity } from "@/lib/types"
-import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
-import { useToast } from "@/components/ui/use-toast"
 import { EntityBadgesList } from "@/components/entity-badges-list"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { formatTranslation, useLanguage } from "@/contexts/language-context"
 import { useAutosave } from "@/hooks/use-autosave"
-import { useLanguage, formatTranslation } from "@/contexts/language-context"
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
+import type { Chapter, Entity } from "@/lib/types"
+import { goToBook, goToProject } from "@/lib/utils/navigateTo"
+import { useProject } from "@/providers/project-provider"
+import { useRouter } from "next/navigation"
+import React from "react"
+import { Usable, useEffect, useState } from "react"
 
 export default function BookPage({
   params,
 }: {
-  params: { id: string; bookId: string }
+  params: Usable<{ bookSlug: string }>
 }) {
+  const { bookSlug } = React.use(params)
+  const { project, loading, error, saveProject, getBook } = useProject()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { project, loading, error, saveProject } = useProject(params.id)
   const [isCreateChapterOpen, setIsCreateChapterOpen] = useState(false)
   const { hasUnsavedChanges, setUnsavedChanges } = useUnsavedChanges()
   const { toast } = useToast()
@@ -31,7 +33,9 @@ export default function BookPage({
   const { t } = useLanguage()
 
   // Set up autosave
-  const { handleManualSave } = useAutosave(params.id, project, hasUnsavedChanges, saveProject)
+  const { handleManualSave } = useAutosave()
+
+  const book = getBook(bookSlug)
 
   useEffect(() => {
     if (error) {
@@ -40,54 +44,45 @@ export default function BookPage({
   }, [error, router])
 
   useEffect(() => {
-    if (project) {
-      const book = project.books.find((b) => b.id === params.bookId)
-      if (book) {
-        // Collect all entities used in this book's chapters
-        const usedEntityIds = new Set<string>()
-        const counts: Record<string, number> = {}
+    if (book) {
+      // Collect all entities used in this book's chapters
+      const usedEntityIds = new Set<string>()
+      const counts: Record<string, number> = {}
 
-        book.chapters.forEach((chapter) => {
-          project.entities.forEach((entity) => {
-            // Check if entity is referenced in chapter content
-            if (chapter.content) {
-              const regex = new RegExp(`@${entity.slug}(?:\\.(\\w+))?`, "g")
-              const matches = chapter.content.match(regex) || []
+      book.chapters.forEach((chapter) => {
+        project.entities.forEach((entity) => {
+          // Check if entity is referenced in chapter content
+          if (chapter.content) {
+            const regex = new RegExp(`@${entity.slug}(?:\\.(\\w+))?`, "g")
+            const matches = chapter.content.match(regex) || []
 
-              if (matches.length > 0) {
-                usedEntityIds.add(entity.id)
-                counts[entity.id] = (counts[entity.id] || 0) + matches.length
-              }
+            if (matches.length > 0) {
+              usedEntityIds.add(entity.slug)
+              counts[entity.slug] = (counts[entity.slug] || 0) + matches.length
             }
-          })
+          }
         })
+      })
 
-        // Filter entities that are used in this book
-        const bookEntities = project.entities.filter((entity) => usedEntityIds.has(entity.id))
-        setUsedEntities(bookEntities)
-        setEntityCounts(counts)
-      }
+      // Filter entities that are used in this book
+      const bookEntities = project.entities.filter((entity) => usedEntityIds.has(entity.slug))
+      setUsedEntities(bookEntities)
+      setEntityCounts(counts)
     }
-  }, [project, params.bookId])
+  }, [project, book?.slug])
 
   if (loading) {
     return null // Layout will show loading state
   }
 
-  if (!project) {
-    return null
-  }
-
-  const book = project.books.find((b) => b.id === params.bookId)
-
   if (!book) {
-    router.push(`/project/${params.id}`)
+    goToProject(project.slug, router)
     return null
   }
 
   const handleCreateChapter = (chapter: Chapter) => {
     const updatedBooks = project.books.map((b) => {
-      if (b.id === book.id) {
+      if (b.slug === book.slug) {
         return {
           ...b,
           chapters: [...b.chapters, chapter],
@@ -127,7 +122,7 @@ export default function BookPage({
   const handleBookTitleChange = (title: string) => {
     if (title !== book.title) {
       const updatedBooks = project.books.map((b) => {
-        if (b.id === book.id) {
+        if (b.slug === book.slug) {
           return {
             ...b,
             title,
@@ -148,7 +143,7 @@ export default function BookPage({
   const handleBookDescriptionChange = (description: string) => {
     if (description !== book.description) {
       const updatedBooks = project.books.map((b) => {
-        if (b.id === book.id) {
+        if (b.slug === book.slug) {
           return {
             ...b,
             description,
@@ -169,9 +164,9 @@ export default function BookPage({
   // Handle chapter title changes
   const handleChapterTitleChange = (chapterId: string, title: string) => {
     const updatedBooks = project.books.map((b) => {
-      if (b.id === book.id) {
+      if (b.slug === book.slug) {
         const updatedChapters = b.chapters.map((c) => {
-          if (c.id === chapterId) {
+          if (c.slug === chapterId) {
             return {
               ...c,
               title,
@@ -202,7 +197,7 @@ export default function BookPage({
       <div className="p-4 border-b">
         <BookHeader
           book={book}
-          projectId={params.id}
+          projectId={project.slug}
           hasUnsavedChanges={hasUnsavedChanges}
           onTitleChange={handleBookTitleChange}
           onDescriptionChange={handleBookDescriptionChange}

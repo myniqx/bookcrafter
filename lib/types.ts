@@ -32,7 +32,7 @@ export interface Project extends ProjectBase {
 
 
 export interface Book {
-  id: string
+  slug: string
   title: string
   description?: string
   createdAt: string
@@ -43,7 +43,7 @@ export interface Book {
 }
 
 export interface Chapter {
-  id: string
+  slug: string
   title: string
   number?: number
   content?: string
@@ -55,7 +55,6 @@ export interface Chapter {
 export type EntityType = "character" | "location" | "item" | "event"
 
 export interface Entity {
-  id: string
   name: string
   slug: string
   type: EntityType

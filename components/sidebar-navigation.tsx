@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ChevronDown, ChevronRight, Home, BookIcon, Save } from "lucide-react"
+import { ChevronDown, ChevronRight, Home, BookIcon, Save, ProjectorIcon, WorkflowIcon, Workflow } from "lucide-react"
 import type { Project, Book } from "@/lib/types"
 import { useLanguage } from "@/contexts/language-context"
 import { useProject } from "@/providers/project-provider"
@@ -32,13 +32,13 @@ interface SidebarNavigationProps {
 }
 
 // Şimdi, bileşenin başlangıcında bir kontrol ekleyelim
-export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigationProps) {
+export function SidebarNavigation() {
   const pathname = usePathname()
   const router = useRouter()
   const [openBooks, setOpenBooks] = useState(true)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
-  const { project } = useProject()
+  const { project, saveProject, hasUnsavedChanges } = useProject()
   const { t } = useLanguage()
 
   // Eğer project undefined ise, yükleniyor durumunu gösterelim
@@ -58,7 +58,6 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
     )
   }
 
-  const hasUnsavedChanges = unsavedPaths.includes(pathname)
 
   const handleNavigation = (path: string) => {
     if (hasUnsavedChanges) {
@@ -83,16 +82,14 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
   }
 
   const handleSave = () => {
-    if (onSave) {
-      onSave()
-    }
+    saveProject()
   }
 
   return (
     <>
-      <div className="h-screen flex flex-col border-r bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
-        <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold">{project.name}</h2>
+      <div className="h-screen w-96 flex flex-col border-r bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+        <div className="p-3 border-b flex justify-between items-center h-15">
+          <h2 className="text-lg font-semibold ">{project.name}</h2>
           {hasUnsavedChanges && (
             <Button variant="outline" size="sm" onClick={handleSave}>
               <Save className="h-4 w-4 mr-1" />
@@ -113,12 +110,12 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
               </Button>
 
               <Button
-                variant={pathname === `/project/${project.id}` ? "secondary" : "ghost"}
+                variant={pathname === `/${project.slug}/project` ? "secondary" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => handleNavigation(`/project/${project.id}`)}
+                onClick={() => handleNavigation(`/${project.slug}/project`)}
               >
-                <BookIcon className="h-4 w-4 mr-2" />
-                {t("books")}
+                <Workflow className="h-4 w-4 mr-2" />
+                {project.name}
               </Button>
             </div>
 
@@ -138,10 +135,10 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
                 <div className="pl-4 space-y-1 mt-1">
                   {project.books.map((book: Book) => (
                     <Button
-                      key={book.id}
-                      variant={pathname === `/project/${project.id}/book/${book.id}` ? "secondary" : "ghost"}
+                      key={book.slug}
+                      variant={pathname === `/${project.slug}/book/${book.slug}` ? "secondary" : "ghost"}
                       className="w-full justify-start text-sm"
-                      onClick={() => handleNavigation(`/project/${project.id}/book/${book.id}`)}
+                      onClick={() => handleNavigation(`/${project.slug}/book/${book.slug}`)}
                     >
                       {book.title}
                     </Button>

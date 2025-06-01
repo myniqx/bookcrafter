@@ -48,7 +48,7 @@ export function SavedProjectsList() {
 
     // Extract the original project ID (remove -autosave suffix)
     const originalId = slug.replace("-autosave", "")
-    router.push(`/project/${originalId}`)
+    router.push(`/${originalId}/project`)
   }
 
   const handleDeleteProject = (slug: string) => {

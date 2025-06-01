@@ -36,7 +36,7 @@ export function ProjectList() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {projects.map((project) => (
-        <Link href={`/${project.slug}/project`} key={project.slug}>
+        <Link href={`/${project.slug}/project`} key={project.slug || project.name}>
           <Card className="h-full cursor-pointer hover:bg-muted/20 transition-colors">
             <CardHeader>
               <CardTitle>{project.name || t("untitled_project")}</CardTitle>

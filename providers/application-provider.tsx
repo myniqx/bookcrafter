@@ -45,10 +45,13 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
 
         if (isElectronApp) {
           setPlatform("electron")
+          console.log("Running in Electron")
         } else if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
           setPlatform("mobile")
+          console.log("Running on mobile device")
         } else {
           setPlatform("web")
+          console.log("Running in web browser")
         }
       }
     }

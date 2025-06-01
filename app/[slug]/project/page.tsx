@@ -325,8 +325,6 @@ export default function ProjectPage() {
         </Tabs>
       </div>
 
-      <CreateBookDialog open={isCreateBookOpen} onOpenChange={setIsCreateBookOpen} onCreateBook={handleCreateBook} />
-
       <CreateEntityDialog
         open={isCreateEntityOpen}
         onOpenChange={setIsCreateEntityOpen}

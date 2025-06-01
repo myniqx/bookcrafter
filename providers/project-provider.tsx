@@ -16,26 +16,25 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAutosave } from "@/hooks/use-autosave"; // Path updated if hook is in /hooks
 import { useApplication } from "@/providers/application-provider";
 
-// 1. Context'in Tipi Tanımlanıyor
 interface ProjectContextType {
-  project: Project | null;
+  project: Project;
   loading: boolean;
   error: string | null;
   saveProject: (updatedProject?: Project) => Promise<boolean>;
   updateProject: (updatedProject: Project) => void;
   addBook: (book: Book) => Book | undefined;
-  updateBook: (bookId: string, updatedBook: Partial<Book>) => void;
-  addChapter: (bookId: string, chapter: Chapter) => Chapter | undefined;
+  updateBook: (bookSlug: string, updatedBook: Partial<Book>) => void;
+  addChapter: (bookSlug: string, chapter: Chapter) => Chapter | undefined;
   updateChapter: (
-    bookId: string,
-    chapterId: string,
+    bookSlug: string,
+    chapterSlug: string,
     updatedChapter: Partial<Chapter>
   ) => void;
   addEntity: (entity: Entity) => Entity | undefined;
-  updateEntity: (entityId: string, updatedEntity: Partial<Entity>) => void;
-  getBook: (bookId: string) => Book | null;
-  getChapter: (bookId: string, chapterId: string) => Chapter | null;
-  getEntity: (entityId: string) => Entity | null;
+  updateEntity: (entitySlug: string, updatedEntity: Partial<Entity>) => void;
+  getBook: (bookSlug: string) => Book | null;
+  getChapter: (bookSlug: string, chapterSlug: string) => Chapter | null;
+  getEntity: (entitySlug: string) => Entity | null;
 
   hasUnsavedChanges: boolean;
 }
@@ -45,11 +44,11 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 // 3. Provider Bileşeni
 interface ProjectProviderProps {
-  projectId: string; // Artık projectId bir prop olarak alınıyor
+  projectSlug: string; // Artık projectSlug bir prop olarak alınıyor
   children: React.ReactNode;
 }
 
-export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
+export function ProjectProvider({ projectSlug, children }: ProjectProviderProps) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,14 +66,16 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Load project
   const loadProject = useCallback(async () => {
-    if (!projectId) return;
+    console.log("Loading project:", projectSlug);
+    if (!projectSlug) return;
 
     setLoading(true);
     setError(null);
 
     try {
       const adapter = getAdapter();
-      const loadedProject = await adapter.loadProject(projectId);
+      console.log("Loading project:", projectSlug, "type: ", adapter.type);
+      const loadedProject = await adapter.loadProject(projectSlug);
       if (loadedProject) {
         setProject(loadedProject);
       } else {
@@ -86,7 +87,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, getAdapter]);
+  }, [projectSlug, getAdapter]);
 
   // Save project
   const saveProject = useCallback(
@@ -107,7 +108,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
           // Delete any autosave when manually saving (only in browser mode)
           if (!isElectron) {
-            deleteAutosave(projectToSave.id);
+            deleteAutosave(projectToSave.slug);
           }
 
           toast({
@@ -172,11 +173,11 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Update book
   const updateBook = useCallback(
-    (bookId: string, updatedBook: Partial<Book>) => {
+    (bookSlug: string, updatedBook: Partial<Book>) => {
       if (!project) return;
 
       const updatedBooks = project.books.map((book) =>
-        book.id === bookId ? { ...book, ...updatedBook } : book
+        book.slug === bookSlug ? { ...book, ...updatedBook } : book
       );
 
       const updatedProject = {
@@ -195,11 +196,11 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Add chapter
   const addChapter = useCallback(
-    (bookId: string, chapter: Chapter) => {
+    (bookSlug: string, chapter: Chapter) => {
       if (!project) return;
 
       const updatedBooks = project.books.map((book) => {
-        if (book.id === bookId) {
+        if (book.slug === bookSlug) {
           return {
             ...book,
             chapters: [...book.chapters, chapter],
@@ -226,13 +227,13 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Update chapter
   const updateChapter = useCallback(
-    (bookId: string, chapterId: string, updatedChapter: Partial<Chapter>) => {
+    (bookSlug: string, chapterSlug: string, updatedChapter: Partial<Chapter>) => {
       if (!project) return;
 
       const updatedBooks = project.books.map((book) => {
-        if (book.id === bookId) {
+        if (book.slug === bookSlug) {
           const updatedChapters = book.chapters.map((chapter) =>
-            chapter.id === chapterId ? { ...chapter, ...updatedChapter } : chapter
+            chapter.slug === chapterSlug ? { ...chapter, ...updatedChapter } : chapter
           );
           return {
             ...book,
@@ -279,11 +280,11 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Update entity
   const updateEntity = useCallback(
-    (entityId: string, updatedEntity: Partial<Entity>) => {
+    (entitySlug: string, updatedEntity: Partial<Entity>) => {
       if (!project) return;
 
       const updatedEntities = project.entities.map((entity) =>
-        entity.id === entityId ? { ...entity, ...updatedEntity } : entity
+        entity.slug === entitySlug ? { ...entity, ...updatedEntity } : entity
       );
 
       const updatedProject = {
@@ -302,34 +303,34 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   // Get book by ID
   const getBook = useCallback(
-    (bookId: string) => {
+    (bookSlug: string) => {
       if (!project) return null;
-      return project.books.find((book) => book.id === bookId) || null;
+      return project.books.find((book) => book.slug === bookSlug) || null;
     },
     [project]
   );
 
   // Get chapter by ID
   const getChapter = useCallback(
-    (bookId: string, chapterId: string) => {
+    (bookSlug: string, chapterSlug: string) => {
       if (!project) return null;
-      const book = project.books.find((book) => book.id === bookId);
+      const book = project.books.find((book) => book.slug === bookSlug);
       if (!book) return null;
-      return book.chapters.find((chapter) => chapter.id === chapterId) || null;
+      return book.chapters.find((chapter) => chapter.slug === chapterSlug) || null;
     },
     [project]
   );
 
   // Get entity by ID
   const getEntity = useCallback(
-    (entityId: string) => {
+    (entitySlug: string) => {
       if (!project) return null;
-      return project.entities.find((entity) => entity.id === entityId) || null;
+      return project.entities.find((entity) => entity.slug === entitySlug) || null;
     },
     [project]
   );
 
-  // Load project on mount or when projectId changes
+  // Load project on mount or when projectSlug changes
   useEffect(() => {
     loadProject();
   }, [loadProject]);
@@ -339,7 +340,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   // Tüm değerleri memoize ediyoruz ki gereksiz render'lar önlensin
   const contextValue = useMemo(
     () => ({
-      project,
+      project: project!,
       loading,
       error,
       saveProject,
@@ -374,11 +375,29 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     ]
   );
 
-  return (
+  return !project ? (
+    <div className="w-screen h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-15 w-15 border-b-2 border-gray-900"></div>
+      <button
+        className="hidden mt-4 px-4 py-2 bg-red-500 text-white rounded"
+        id="reload-button"
+        onClick={() => window.location.reload()}
+      >
+        Tekrar Yükle
+      </button>
+      <script>
+        {`
+          setTimeout(() => {
+            document.getElementById('reload-button').classList.remove('hidden');
+          }, 300000); // 5 minutes in milliseconds
+        `}
+      </script>
+    </div>
+  ) : (
     <ProjectContext.Provider value={contextValue}>
       {children}
-    </ProjectContext.Provider>
-  );
+      </ProjectContext.Provider >
+    )
 }
 
 // 4. Consumer Hook (Artık bu hook, eski useProject'in yerini alıyor)

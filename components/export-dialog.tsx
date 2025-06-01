@@ -12,6 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,14 +22,13 @@ import type { Project, ExportOptions, ExportFormat } from "@/lib/types"
 import { ExportManager } from "@/lib/export/export-manager"
 import { CompressedFileAdapter } from "@/lib/adapters/compressed-file-adapter"
 import { useToast } from "@/components/ui/use-toast"
+import { useProject } from "@/providers/project-provider"
+import { DialogClose } from "@radix-ui/react-dialog"
 
-interface ExportDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  project: Project
-}
 
-export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps) {
+export function ExportDialog() {
+  const { project } = useProject()
+  const [isOpen, onOpenChange] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportType, setExportType] = useState<"document" | "project">("document")
   const [options, setOptions] = useState<ExportOptions>({
@@ -161,7 +161,17 @@ export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps)
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-full"
+          title="Projeyi Export Et"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -179,9 +189,8 @@ export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps)
             </CardHeader>
             <CardContent className="space-y-3">
               <div
-                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  exportType === "document" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
-                }`}
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${exportType === "document" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
+                  }`}
                 onClick={() => setExportType("document")}
               >
                 <div className="flex items-center space-x-2">
@@ -194,9 +203,8 @@ export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps)
               </div>
 
               <div
-                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  exportType === "project" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
-                }`}
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${exportType === "project" ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50"
+                  }`}
                 onClick={() => setExportType("project")}
               >
                 <div className="flex items-center space-x-2">
@@ -223,11 +231,10 @@ export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps)
                   {exportManager.getSupportedFormats().map((format) => (
                     <div
                       key={format}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        options.format === format
+                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${options.format === format
                           ? "border-primary bg-primary/5"
                           : "border-muted hover:border-primary/50"
-                      }`}
+                        }`}
                       onClick={() => setOptions({ ...options, format })}
                     >
                       <div className="flex items-center space-x-2">
@@ -375,9 +382,11 @@ export function ExportDialog({ open, onOpenChange, project }: ExportDialogProps)
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isExporting}>
-            İptal
-          </Button>
+          <DialogClose>
+            <Button variant="outline" disabled={isExporting}>
+              İptal
+            </Button>
+          </DialogClose>
           <Button onClick={handleExport} disabled={isExporting}>
             {isExporting ? "Export ediliyor..." : exportType === "document" ? "Doküman Export Et" : "Proje Export Et"}
           </Button>
