@@ -1,0 +1,242 @@
+"use client"
+
+import { useState } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import type { Entity, EntityType, Note } from "@/lib/types"
+import { Search, User, MapPin, Briefcase, Calendar, Plus, Check } from "lucide-react"
+import { CreateEntityForm } from "./create-entity-form"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+interface EntityManagementPanelProps {
+  entities: Entity[]
+  onCreateEntity: (entity: Entity) => void
+  onCompleteNote: (entityId: string, noteId: string, completed: boolean) => void
+  bookId: string
+  chapterId: string
+}
+
+export function EntityManagementPanel({
+  entities,
+  onCreateEntity,
+  onCompleteNote,
+  bookId,
+  chapterId,
+}: EntityManagementPanelProps) {
+  const [activeTab, setActiveTab] = useState<EntityType>("character")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showCreateForm, setShowCreateForm] = useState(false)
+
+  const filteredEntities = entities
+    .filter((entity) => entity.type === activeTab)
+    .filter(
+      (entity) =>
+        entity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entity.slug.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+
+  const getEntityTypeTitle = () => {
+    switch (activeTab) {
+      case "character":
+        return "Karakterler"
+      case "location":
+        return "Mekanlar"
+      case "item":
+        return "Eşyalar"
+      case "event":
+        return "Olaylar"
+    }
+  }
+
+  const handleCreateEntity = (entity: Entity) => {
+    onCreateEntity(entity)
+    setShowCreateForm(false)
+  }
+
+  return (
+    <div className="space-y-4 h-full overflow-auto">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">{getEntityTypeTitle()}</h2>
+        <Button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          variant={showCreateForm ? "secondary" : "default"}
+          className={
+            showCreateForm ? "" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          }
+        >
+          {showCreateForm ? (
+            "İptal"
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              Yeni{" "}
+              {activeTab === "character"
+                ? "Karakter"
+                : activeTab === "location"
+                  ? "Mekan"
+                  : activeTab === "item"
+                    ? "Eşya"
+                    : "Olay"}
+            </>
+          )}
+        </Button>
+      </div>
+
+      {showCreateForm ? (
+        <CreateEntityForm
+          entityType={activeTab}
+          onCreateEntity={handleCreateEntity}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      ) : (
+        <>
+          <div className="flex justify-between items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Öğe adı veya slug ile ara..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EntityType)}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="character">
+                <User className="h-4 w-4 mr-2" />
+                Karakterler
+              </TabsTrigger>
+              <TabsTrigger value="location">
+                <MapPin className="h-4 w-4 mr-2" />
+                Mekanlar
+              </TabsTrigger>
+              <TabsTrigger value="item">
+                <Briefcase className="h-4 w-4 mr-2" />
+                Eşyalar
+              </TabsTrigger>
+              <TabsTrigger value="event">
+                <Calendar className="h-4 w-4 mr-2" />
+                Olaylar
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTab} className="mt-4">
+              <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-auto pr-1">
+                {filteredEntities.length === 0 ? (
+                  <div className="text-center p-8 border rounded-lg bg-muted/20">
+                    <p className="text-muted-foreground">Hiç öğe bulunamadı.</p>
+                  </div>
+                ) : (
+                  filteredEntities.map((entity) => (
+                    <EntityCard
+                      key={entity.id}
+                      entity={entity}
+                      onCompleteNote={onCompleteNote}
+                      bookId={bookId}
+                      chapterId={chapterId}
+                    />
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+    </div>
+  )
+}
+
+interface EntityCardProps {
+  entity: Entity
+  onCompleteNote: (entityId: string, noteId: string, completed: boolean) => void
+  bookId: string
+  chapterId: string
+}
+
+function EntityCard({ entity, onCompleteNote, bookId, chapterId }: EntityCardProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  // Filter notes that are not completed or completed in this chapter
+  const relevantNotes =
+    entity.notes?.filter(
+      (note) => !note.completed || (note.completedIn?.bookId === bookId && note.completedIn?.chapterId === chapterId),
+    ) || []
+
+  return (
+    <Card className="transition-all duration-200 hover:shadow-md">
+      <CardHeader className="py-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <CardTitle className="text-base flex items-center justify-between">
+          <span>{entity.name}</span>
+          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">@{entity.slug}</span>
+        </CardTitle>
+      </CardHeader>
+
+      {expanded && (
+        <CardContent>
+          {entity.description && <p className="text-sm text-muted-foreground mb-4">{entity.description}</p>}
+
+          {relevantNotes.length > 0 ? (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Notlar:</h4>
+              {relevantNotes.map((note) => (
+                <NoteItem
+                  key={note.id}
+                  note={note}
+                  entityId={entity.id}
+                  onComplete={onCompleteNote}
+                  bookId={bookId}
+                  chapterId={chapterId}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Bu öğe için not bulunmuyor.</p>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
+interface NoteItemProps {
+  note: Note
+  entityId: string
+  onComplete: (entityId: string, noteId: string, completed: boolean) => void
+  bookId: string
+  chapterId: string
+}
+
+function NoteItem({ note, entityId, onComplete, bookId, chapterId }: NoteItemProps) {
+  const isCompletedHere =
+    note.completed && note.completedIn?.bookId === bookId && note.completedIn?.chapterId === chapterId
+
+  return (
+    <div className="flex items-start gap-2 p-2 border rounded-md bg-muted/10 hover:bg-muted/20 transition-colors">
+      <Checkbox
+        id={`note-${note.id}`}
+        checked={isCompletedHere}
+        onCheckedChange={(checked) => {
+          onComplete(entityId, note.id, checked === true)
+        }}
+      />
+      <div className="flex-1">
+        <label
+          htmlFor={`note-${note.id}`}
+          className={`text-sm font-medium cursor-pointer ${isCompletedHere ? "line-through text-muted-foreground" : ""}`}
+        >
+          {note.title}
+        </label>
+        <p
+          className={`text-xs mt-1 ${isCompletedHere ? "line-through text-muted-foreground" : "text-muted-foreground"}`}
+        >
+          {note.content}
+        </p>
+      </div>
+      {isCompletedHere && <Check className="h-4 w-4 text-green-500" />}
+    </div>
+  )
+}

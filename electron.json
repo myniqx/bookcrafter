@@ -1,0 +1,12 @@
+{
+  "name": "BookCraft",
+  "version": "1.0.0",
+  "description": "Professional book writing application with AI assistance",
+  "author": "BookCraft Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bookcraft/bookcraft.git"
+  },
+  "keywords": ["writing", "book", "author", "editor", "ai", "markdown"]
+}
