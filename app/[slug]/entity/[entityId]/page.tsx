@@ -205,12 +205,12 @@ export default function EntityPage({
 
       <div className="p-4 border-b">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
             <EditableText
               value={entity.name}
               onChange={handleEntityNameChange}
               isTitle
-              className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
+              className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
             />
             {hasUnsavedChanges && <span className="text-red-500">*</span>}
           </h1>

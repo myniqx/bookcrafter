@@ -31,12 +31,12 @@ export function BookHeader({
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
             <EditableText
               value={book.title}
               onChange={onTitleChange || (() => {})}
               isTitle
-              className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
+              className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
             />
             {hasUnsavedChanges && <span className="text-red-500">*</span>}
           </h1>

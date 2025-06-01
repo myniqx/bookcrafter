@@ -58,7 +58,7 @@ export function ExportButton({ projectId, hasUnsavedChanges, onSave }: ExportBut
       variant="outline"
       size="icon"
       onClick={handleExport}
-      className="rounded-full bg-background/80 backdrop-blur-sm border-muted"
+      className="rounded-full bg-background/80 backdrop-blur-xs border-muted"
       title="Projeyi Dışa Aktar"
     >
       <Download className="h-[1.2rem] w-[1.2rem]" />

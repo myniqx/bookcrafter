@@ -44,7 +44,7 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
   // Eğer project undefined ise, yükleniyor durumunu gösterelim
   if (!project) {
     return (
-      <div className="h-screen flex flex-col border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="h-screen flex flex-col border-r bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="p-4 border-b">
           <div className="h-6 w-32 bg-muted animate-pulse rounded"></div>
         </div>
@@ -90,7 +90,7 @@ export function SidebarNavigation({  unsavedPaths = [], onSave }: SidebarNavigat
 
   return (
     <>
-      <div className="h-screen flex flex-col border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="h-screen flex flex-col border-r bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold">{project.name}</h2>
           {hasUnsavedChanges && (

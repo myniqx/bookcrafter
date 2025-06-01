@@ -47,7 +47,7 @@ export function EntityHeader({ entity, projectId }: EntityHeaderProps) {
         </Button>
         <div className="flex items-center gap-2">
           {getEntityIcon()}
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
             {entity.name}
           </h1>
         </div>

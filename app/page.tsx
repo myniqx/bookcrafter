@@ -18,7 +18,7 @@ export default function Home() {
   const { t } = useLanguage()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header with language switcher */}
       <div className="flex justify-between items-center p-4">
         <div className="flex items-center gap-2">
@@ -44,7 +44,7 @@ export default function Home() {
             <Button
               onClick={() => setCreateDialogOpen(true)}
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
               <Plus className="mr-2 h-5 w-5" />
               {t("new_project")}

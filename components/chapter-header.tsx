@@ -22,7 +22,7 @@ export function ChapterHeader({ chapter, book, projectId, hasUnsavedChanges = fa
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
             {chapter.number && <span className="text-muted-foreground mr-2">#{chapter.number}</span>}
             {chapter.title}
             {hasUnsavedChanges && <span className="text-red-500 ml-2">*</span>}

@@ -181,7 +181,7 @@ export function ImageManager({
               </div>
               {image.type === "cover" && onSetCoverImage && (
                 <Button
-                  variant={coverImageId === image.id ? "default" : "outline"}
+                  variant={coverImageId === image.id ? "default" : "outline-solid"}
                   size="sm"
                   className="w-full"
                   onClick={() => onSetCoverImage(image.id)}
@@ -191,7 +191,7 @@ export function ImageManager({
               )}
               {image.type === "background" && onSetBackgroundImage && (
                 <Button
-                  variant={backgroundImageId === image.id ? "default" : "outline"}
+                  variant={backgroundImageId === image.id ? "default" : "outline-solid"}
                   size="sm"
                   className="w-full"
                   onClick={() => onSetBackgroundImage(image.id)}

@@ -91,7 +91,7 @@ export function EntityList({
           onClick={() => setShowCreateForm(!showCreateForm)}
           variant={showCreateForm ? "secondary" : "default"}
           className={
-            showCreateForm ? "" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            showCreateForm ? "" : "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           }
         >
           {showCreateForm ? (

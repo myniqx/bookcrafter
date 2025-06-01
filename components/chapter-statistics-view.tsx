@@ -23,7 +23,7 @@ export function ChapterStatisticsView({
   return (
     <div className="space-y-6 h-full overflow-auto pr-1">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border-blue-100 dark:border-blue-900">
+        <Card className="bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border-blue-100 dark:border-blue-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Paragraf Sayısı</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -33,7 +33,7 @@ export function ChapterStatisticsView({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border-indigo-100 dark:border-indigo-900">
+        <Card className="bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border-indigo-100 dark:border-indigo-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Kelime Sayısı</CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -43,7 +43,7 @@ export function ChapterStatisticsView({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/40 dark:to-pink-950/40 border-purple-100 dark:border-purple-900">
+        <Card className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-950/40 dark:to-pink-950/40 border-purple-100 dark:border-purple-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Karakter Sayısı</CardTitle>
             <Hash className="h-4 w-4 text-muted-foreground" />
@@ -54,7 +54,7 @@ export function ChapterStatisticsView({
         </Card>
       </div>
 
-      <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+      <Card className="shadow-xs hover:shadow-md transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center">
             <BarChart className="h-5 w-5 mr-2" />

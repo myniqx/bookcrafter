@@ -271,7 +271,7 @@ export function MarkdownEditor({
         onKeyDown={handleKeyDown}
         onSelect={handleTextSelection}
         onMouseUp={handleTextSelection}
-        className="w-full h-[calc(100vh-300px)] min-h-[400px] p-2 font-mono text-sm bg-transparent resize-none focus:outline-none"
+        className="w-full h-[calc(100vh-300px)] min-h-[400px] p-2 font-mono text-sm bg-transparent resize-none focus:outline-hidden"
         placeholder="Metninizi buraya yazın. @tanimlayici veya @tanimlayici.ozellik formatında öğe referansları kullanabilirsiniz. Markdown formatlaması desteklenir."
       />
 

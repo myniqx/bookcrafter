@@ -216,7 +216,7 @@ export default function BookPage({
               <h2 className="text-2xl font-bold">{t("chapters")}</h2>
               <Button
                 onClick={() => setIsCreateChapterOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
               >
                 {t("add_new_chapter")}
               </Button>
@@ -232,7 +232,7 @@ export default function BookPage({
           </div>
 
           <div>
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader>
                 <CardTitle>{t("book_statistics")}</CardTitle>
               </CardHeader>
