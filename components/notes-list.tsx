@@ -10,20 +10,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useProject } from "@/hooks/use-project"
 import { formatDate } from "@/lib/utils"
+import { useEntity } from "@/providers/entity-provider"
 
-interface NotesListProps {
-  notes: Note[]
-  entityId: string
-  projectId: string
-}
 
-export function NotesList({ entityId, notes, projectId }: NotesListProps) {
-  const { project, saveProject } = useProject(projectId)
+export function NotesList() {
+  const { entity, project, saveProject, updateEntity } = useEntity()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editContent, setEditContent] = useState("")
+
+  const notes = entity.notes || []
 
   if (notes.length === 0) {
     return (
@@ -40,56 +37,32 @@ export function NotesList({ entityId, notes, projectId }: NotesListProps) {
   }
 
   const handleSave = (note: Note) => {
-    if (!project) return
 
-    const updatedEntities = project.entities.map((entity) => {
-      if (entity.id === entityId) {
-        const updatedNotes = (entity.notes || []).map((n) => {
-          if (n.id === note.id) {
-            return {
-              ...n,
-              content: editContent,
-              title: editTitle,
-            }
+    updateEntity({
+      notes: (entity.notes || []).map((n) => {
+        if (n.id === note.id) {
+          return {
+            ...n,
+            content: editContent,
+            title: editTitle,
           }
-          return n
-        })
-
-        return {
-          ...entity,
-          notes: updatedNotes,
         }
-      }
-      return entity
+        return n
+      }),
     })
 
-    saveProject({
-      ...project,
-      entities: updatedEntities,
-      updatedAt: new Date().toISOString(),
-    })
-
+    saveProject()
     setEditingId(null)
   }
 
   const handleDelete = (noteId: string) => {
     if (!project || !confirm("Bu notu silmek istediğinizden emin misiniz?")) return
 
-    const updatedEntities = project.entities.map((entity) => {
-      if (entity.id === entityId) {
-        return {
-          ...entity,
-          notes: (entity.notes || []).filter((note) => note.id !== noteId),
-        }
-      }
-      return entity
+    updateEntity({
+      notes: (entity.notes || []).filter((note) => note.id !== noteId),
     })
 
-    saveProject({
-      ...project,
-      entities: updatedEntities,
-      updatedAt: new Date().toISOString(),
-    })
+    saveProject()
   }
 
   return (

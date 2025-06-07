@@ -9,18 +9,15 @@ import type { EntityProperty } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useProject } from "@/hooks/use-project"
+import { useEntity } from "@/providers/entity-provider"
 
-interface PropertyListProps {
-  properties: EntityProperty[]
-  entityId: string
-  projectId: string
-}
 
-export function PropertyList({ entityId, projectId, properties }: PropertyListProps) {
-  const { project, saveProject } = useProject(projectId)
+export function PropertyList() {
+  const { entity, saveProject, updateEntity } = useEntity()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
+
+  const properties = entity.properties || []
 
   if (properties.length === 0) {
     return (
@@ -36,71 +33,43 @@ export function PropertyList({ entityId, projectId, properties }: PropertyListPr
   }
 
   const handleSave = (property: EntityProperty) => {
-    if (!project) return
-
-    const updatedEntities = project.entities.map((entity) => {
-      if (entity.id === entityId) {
-        const updatedProperties = entity.properties.map((prop) => {
-          if (prop.id === property.id) {
-            return {
-              ...prop,
-              value: editValue,
-            }
+    updateEntity({
+      properties: (entity.properties || []).map((prop) => {
+        if (prop.id === property.id) {
+          return {
+            ...prop,
+            value: editValue,
           }
-          return prop
-        })
-
-        return {
-          ...entity,
-          properties: updatedProperties,
         }
-      }
-      return entity
+        return prop
+      }),
     })
 
-    saveProject({
-      ...project,
-      entities: updatedEntities,
-      updatedAt: new Date().toISOString(),
-    })
+    saveProject()
 
     setEditingId(null)
   }
 
   const handleToggleDefault = (property: EntityProperty) => {
-    if (!project) return
-
-    const updatedEntities = project.entities.map((entity) => {
-      if (entity.id === entityId) {
-        const updatedProperties = entity.properties.map((prop) => {
-          if (prop.id === property.id) {
-            return {
-              ...prop,
-              isDefault: !prop.isDefault,
-            }
-          } else if (prop.isDefault && property.id !== prop.id) {
-            // Ensure only one default property
-            return {
-              ...prop,
-              isDefault: false,
-            }
+    updateEntity({
+      properties: (entity.properties || []).map((prop) => {
+        if (prop.id === property.id) {
+          return {
+            ...prop,
+            isDefault: !prop.isDefault,
           }
-          return prop
-        })
-
-        return {
-          ...entity,
-          properties: updatedProperties,
+        } else if (prop.isDefault && property.id !== prop.id) {
+          // Ensure only one default property
+          return {
+            ...prop,
+            isDefault: false,
+          }
         }
-      }
-      return entity
+        return prop
+      }),
     })
 
-    saveProject({
-      ...project,
-      entities: updatedEntities,
-      updatedAt: new Date().toISOString(),
-    })
+    saveProject()
   }
 
   return (

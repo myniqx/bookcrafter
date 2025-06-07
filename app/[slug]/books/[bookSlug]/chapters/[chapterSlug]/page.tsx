@@ -1,37 +1,33 @@
 "use client"
 
-import { useEffect, useState } from "react"
-
+import { useCallback, useEffect, useState } from "react"
 
 import { ChapterHeader } from "@/components/chapter-header"
 import { ChapterStatisticsView } from "@/components/chapter-statistics-view"
-import { EntityBadgesList } from "@/components/entity-badges-list"
+import { EntityManagementPanel } from "@/components/entity-management-panel"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { MarkdownPreview } from "@/components/markdown-preview"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
-import { useChapter } from "@/providers/chapter-provider"
-import { ChapterStatistics, Entity } from "@/lib/types"
-import { useRouter } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
 import { useToast } from "@/hooks/use-toast"
+import { ChapterStatistics, Entity } from "@/lib/types"
+import { useChapter } from "@/providers/chapter-provider"
 import { useProject } from "@/providers/project-provider"
+import { debounce } from "lodash"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 
 export default function ChapterPage() {
   const { book, chapter, project, updateChapter } = useChapter()
   const { saveProject, updateProject } = useProject()
-  
-  const router = useRouter()
+
   const [content, setContent] = useState("")
   const [originalContent, setOriginalContent] = useState("")
   const [activeTab, setActiveTab] = useState("preview")
   const [statistics, setStatistics] = useState<ChapterStatistics | null>(null)
   const [processedContent, setProcessedContent] = useState("")
-  const { hasUnsavedChanges, setUnsavedChanges } = useUnsavedChanges()
   const { toast } = useToast()
-  const [chapterTitle, setChapterTitle] = useState("")
   const { t } = useLanguage()
 
 
@@ -41,31 +37,15 @@ export default function ChapterPage() {
 
     setContent(chapter.content || "")
     setOriginalContent(chapter.content || "")
-    setChapterTitle(chapter.title)
     calculateStatistics(chapter.content || "", project.entities)
   }, [chapter])
-
-  // Check for unsaved changes
-  useEffect(() => {
-    setUnsavedChanges(content !== originalContent)
-  }, [content, originalContent, setUnsavedChanges])
-
-
-
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent)
-    calculateStatistics(newContent, project.entities)
-  }
 
   const handleProcessedContentChange = (processed: string) => {
     setProcessedContent(processed)
   }
 
-  const handleSave = () => {
-    updateChapter({
-      content,
-      title: chapterTitle
-    })
+  const handleSave = (content: string) => {
+    updateChapter({ content })
 
     // Update entity references
     const entityReferences = extractEntityReferences(content, project.entities)
@@ -76,21 +56,21 @@ export default function ChapterPage() {
 
         // Check if this chapter is already in usages
         const existingUsageIndex = updatedUsages.findIndex(
-          (usage) => usage.bookId === book.slug && usage.chapterId === chapter.slug,
+          (usage) => usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug,
         )
 
         if (existingUsageIndex >= 0) {
           // Update existing usage
           updatedUsages[existingUsageIndex] = {
-            bookId: book.slug,
-            chapterId: chapter.slug,
+            bookSlug: book.slug,
+            chapterSlug: chapter.slug,
             count: references.length,
           }
         } else {
           // Add new usage
           updatedUsages.push({
-            bookId: book.slug,
-            chapterId: chapter.slug,
+            bookSlug: book.slug,
+            chapterSlug: chapter.slug,
             count: references.length,
           })
         }
@@ -102,7 +82,7 @@ export default function ChapterPage() {
       } else {
         // Remove this chapter from usages if it exists
         const updatedUsages = (entity.usages || []).filter(
-          (usage) => !(usage.bookId === book.slug && usage.chapterId === chapter.slug),
+          (usage) => !(usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug),
         )
 
         return {
@@ -126,7 +106,15 @@ export default function ChapterPage() {
       variant: "success",
     })
 
-    setUnsavedChanges(false)
+  }
+
+  const handleSaveDebounced = debounce(handleSave, 1000)
+
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent)
+    calculateStatistics(newContent, project.entities)
+    handleSaveDebounced()
   }
 
   const calculateStatistics = (text: string, entities: Entity[]) => {
@@ -160,23 +148,6 @@ export default function ChapterPage() {
       entityUsage,
       paragraphCount,
       wordCount,
-    })
-  }
-
-  const handleCreateEntity = (entity: Entity) => {
-    if (!project) return
-
-    const updatedProject = {
-      ...project,
-      entities: [...project.entities, entity],
-    }
-
-    saveProject(updatedProject)
-
-    toast({
-      description: formatTranslation(t("entity_created_description"), { name: entity.name }),
-      title: t("entity_created"),
-      variant: "success",
     })
   }
 
@@ -222,66 +193,65 @@ export default function ChapterPage() {
     })
   }
 
-  // Helper function to format translations with variables
-  const formatTranslation = (key: string, vars: { [key: string]: string }) => {
-    let translation = t(key)
-    for (const key in vars) {
-      translation = translation.replace(`{${key}}`, vars[key])
-    }
-    return translation
-  }
 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-none">
-        <Separator className="my-2" />
-      </div>
-
       <ChapterHeader />
 
       <div className="flex-1 overflow-hidden">
-        <div className="flex flex-row">
-          <ScrollArea className="h-full w-3/5">
-            <div className="p-4">
+        <ResizablePanelGroup direction={"horizontal"}>
+          <ResizablePanel className="p-2" defaultSize={70} minSize={30}>
+            <ScrollArea>
               <MarkdownEditor
                 content={content}
                 currentChapter={chapter.title}
-                entities={project.entities}
                 onChange={handleContentChange}
                 onProcessedContentChange={handleProcessedContentChange}
                 project={project}
               />
-            </div>
-          </ScrollArea>
-
-          <Tabs className="h-full flex flex-col" onValueChange={setActiveTab} orientation="vertical" value={activeTab}>
-            <div className="flex items-center justify-between px-2">
-              <TabsList>
+            </ScrollArea>
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel className="p-2" minSize={30}>
+            <Tabs
+              onValueChange={setActiveTab}
+              orientation="vertical"
+              value={activeTab}
+            >
+              <TabsList className="w-full grid grid-cols-3">
                 <TabsTrigger value="preview">Preview</TabsTrigger>
+                <TabsTrigger value="entities">Entities</TabsTrigger>
                 <TabsTrigger value="statistics">Statistics</TabsTrigger>
               </TabsList>
-              <EntityBadgesList entities={project.entities} />
-            </div>
 
+              <TabsContent className="flex-1 overflow-hidden" value="preview">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <MarkdownPreview content={processedContent} />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
 
-            <TabsContent className="flex-1 overflow-hidden" value="preview">
-              <ScrollArea className="h-full">
-                <div className="p-4">
-                  <MarkdownPreview content={processedContent} />
-                </div>
-              </ScrollArea>
-            </TabsContent>
+              <TabsContent className="flex-1 overflow-hidden" value="entities">
+                <ScrollArea className="h-full">
+                  <EntityManagementPanel
+                    bookId={book.slug}
+                    chapterId={chapter.slug}
+                    onCompleteNote={handleCompleteNote} />
+                </ScrollArea>
+              </TabsContent>
 
-            <TabsContent className="flex-1 overflow-hidden" value="statistics">
-              <ScrollArea className="h-full">
-                <div className="p-4">
-                  <ChapterStatisticsView statistics={statistics} />
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </div>
+              <TabsContent className="flex-1 overflow-hidden" value="statistics">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <ChapterStatisticsView statistics={statistics} />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </ResizablePanel>
+        </ResizablePanelGroup>
 
 
       </div>

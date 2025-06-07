@@ -13,37 +13,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useProject } from "@/providers/project-provider"
 
 import { CreateEntityForm } from "./create-entity-form"
+import { useLanguage } from "@/contexts/language-context"
+import Link from "next/link"
+import { goToEntity } from "@/lib/utils/navigateTo"
 
-interface EntityListProps {
-  entities: Entity[]
-  projectId: string
+
+export function EntityList({ activeType, onTypeChange }: {
   activeType: EntityType
   onTypeChange: (type: EntityType) => void
-  onCreateCharacter: () => void
-  onCreateLocation: () => void
-  onCreateItem: () => void
-  onCreateEvent: () => void
-  onSelectEntity: (entity: Entity) => void
-}
-
-export function EntityList({
-  activeType,
-  onCreateCharacter,
-  onCreateEvent,
-  onCreateItem,
-  onCreateLocation,
-  onSelectEntity,
-  onTypeChange,
-}: EntityListProps) {
+}) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { addEntity, project, updateEntity } = useProject()
-  
-  if (!project) {
-    return null
-  }
-
-  const entities = project.entities || []
+  const { addEntity, entities, project, updateEntity } = useProject()
+  const { t } = useLanguage()
 
   const filteredEntities = entities
     .filter((entity) => entity.type === activeType)
@@ -53,39 +35,9 @@ export function EntityList({
         entity.slug.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-  const getEntityTypeTitle = () => {
-    switch (activeType) {
-      case "character":
-        return "Karakterler"
-      case "location":
-        return "Mekanlar"
-      case "item":
-        return "Eşyalar"
-      case "event":
-        return "Olaylar"
-    }
-  }
+  const getEntityTypeTitle = () => t(activeType)
 
-  const handleCreateClick = () => {
-    switch (activeType) {
-      case "character":
-        onCreateCharacter()
-        break
-      case "location":
-        onCreateLocation()
-        break
-      case "item":
-        onCreateItem()
-        break
-      case "event":
-        onCreateEvent()
-        break
-    }
-  }
 
-  const handleCreateEntity = () => {
-    setShowCreateForm(false)
-  }
 
   return (
     <div className="space-y-4 h-full overflow-auto">
@@ -120,7 +72,6 @@ export function EntityList({
         <CreateEntityForm
           entityType={activeType}
           onCancel={() => setShowCreateForm(false)}
-          onCreateEntity={handleCreateEntity}
         />
       ) : (
         <>
@@ -138,68 +89,63 @@ export function EntityList({
 
           <Tabs onValueChange={(value) => onTypeChange(value as EntityType)} value={activeType}>
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="character">
-                <User className="h-4 w-4 mr-2" />
-                Karakterler
-              </TabsTrigger>
-              <TabsTrigger value="location">
-                <MapPin className="h-4 w-4 mr-2" />
-                Mekanlar
-              </TabsTrigger>
-              <TabsTrigger value="item">
-                <Briefcase className="h-4 w-4 mr-2" />
-                Eşyalar
-              </TabsTrigger>
-              <TabsTrigger value="event">
-                <Calendar className="h-4 w-4 mr-2" />
-                Olaylar
-              </TabsTrigger>
+                {Object.entries({
+                  character: User,
+                  event: Calendar,
+                  item: Briefcase,
+                  location: MapPin,
+                }).map(([value, Icon]) => (
+                  <TabsTrigger key={value} value={value}>
+                    <Icon className="h-4 w-4 mr-2" />
+                    {t(`${value}s`)}
+                  </TabsTrigger>
+              ))}
             </TabsList>
 
             <TabsContent className="mt-4" value={activeType}>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredEntities.length === 0 ? (
                   <div className="md:col-span-2 lg:col-span-3 text-center p-8 border rounded-lg bg-muted/20">
-                    <p className="text-muted-foreground">Hiç öğe bulunamadı.</p>
+                      <p className="text-muted-foreground">{t("no_item_found")}</p>
                   </div>
                 ) : (
                   filteredEntities.map((entity) => (
-                    <Card
-                      className="cursor-pointer hover:bg-muted/20 transition-colors"
-                      key={entity.id}
-                      onClick={() => onSelectEntity(entity)}
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          {entity.type === "character" && <User className="h-4 w-4" />}
-                          {entity.type === "location" && <MapPin className="h-4 w-4" />}
-                          {entity.type === "item" && <Briefcase className="h-4 w-4" />}
-                          {entity.type === "event" && <Calendar className="h-4 w-4" />}
-                          {entity.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Slug:</span>
-                            <span className="text-sm font-medium">@{entity.slug}</span>
+                    <Link href={goToEntity({ entity, project })} key={entity.slug}>
+                      <Card
+                        className="cursor-pointer hover:bg-muted/20 transition-colors"
+                      >
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            {entity.type === "character" && <User className="h-4 w-4" />}
+                            {entity.type === "location" && <MapPin className="h-4 w-4" />}
+                            {entity.type === "item" && <Briefcase className="h-4 w-4" />}
+                            {entity.type === "event" && <Calendar className="h-4 w-4" />}
+                            {entity.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Slug:</span>
+                              <span className="text-sm font-medium">@{entity.slug}</span>
+                            </div>
+                            {entity.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">{entity.description}</p>
+                            )}
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Özellikler:</span>
+                              <span className="text-sm font-medium">{entity.properties.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Kullanım:</span>
+                              <span className="text-sm font-medium">
+                                {entity.usages?.reduce((sum, usage) => sum + usage.count, 0) || 0} kez
+                              </span>
+                            </div>
                           </div>
-                          {entity.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">{entity.description}</p>
-                          )}
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Özellikler:</span>
-                            <span className="text-sm font-medium">{entity.properties.length}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Kullanım:</span>
-                            <span className="text-sm font-medium">
-                              {entity.usages?.reduce((sum, usage) => sum + usage.count, 0) || 0} kez
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))
                 )}
               </div>

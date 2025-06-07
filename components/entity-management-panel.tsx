@@ -13,10 +13,10 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { CreateEntityForm } from "./create-entity-form"
+import { useLanguage } from "@/contexts/language-context"
+import { useProject } from "@/providers/project-provider"
 
 interface EntityManagementPanelProps {
-  entities: Entity[]
-  onCreateEntity: (entity: Entity) => void
   onCompleteNote: (entityId: string, noteId: string, completed: boolean) => void
   bookId: string
   chapterId: string
@@ -25,15 +25,15 @@ interface EntityManagementPanelProps {
 export function EntityManagementPanel({
   bookId,
   chapterId,
-  entities,
-  onCompleteNote,
-  onCreateEntity,
+  onCompleteNote
 }: EntityManagementPanelProps) {
   const [activeTab, setActiveTab] = useState<EntityType>("character")
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const { t } = useLanguage()
+  const { project } = useProject()
 
-  const filteredEntities = entities
+  const filteredEntities = project.entities
     .filter((entity) => entity.type === activeTab)
     .filter(
       (entity) =>
@@ -41,28 +41,10 @@ export function EntityManagementPanel({
         entity.slug.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-  const getEntityTypeTitle = () => {
-    switch (activeTab) {
-      case "character":
-        return "Karakterler"
-      case "location":
-        return "Mekanlar"
-      case "item":
-        return "Eşyalar"
-      case "event":
-        return "Olaylar"
-    }
-  }
-
-  const handleCreateEntity = (entity: Entity) => {
-    onCreateEntity(entity)
-    setShowCreateForm(false)
-  }
-
   return (
     <div className="space-y-4 h-full overflow-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">{getEntityTypeTitle()}</h2>
+        <h2 className="text-xl font-bold">{t(`${activeTab}s`)}</h2>
         <Button
           className={
             showCreateForm ? "" : "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
@@ -71,18 +53,12 @@ export function EntityManagementPanel({
           variant={showCreateForm ? "secondary" : "default"}
         >
           {showCreateForm ? (
-            "İptal"
+            t("cancel")
           ) : (
             <>
               <Plus className="h-4 w-4 mr-2" />
               Yeni{" "}
-              {activeTab === "character"
-                ? "Karakter"
-                : activeTab === "location"
-                  ? "Mekan"
-                  : activeTab === "item"
-                    ? "Eşya"
-                    : "Olay"}
+                {t(activeTab)}
             </>
           )}
         </Button>
@@ -92,7 +68,6 @@ export function EntityManagementPanel({
         <CreateEntityForm
           entityType={activeTab}
           onCancel={() => setShowCreateForm(false)}
-          onCreateEntity={handleCreateEntity}
         />
       ) : (
         <>
@@ -110,29 +85,24 @@ export function EntityManagementPanel({
 
           <Tabs onValueChange={(value) => setActiveTab(value as EntityType)} value={activeTab}>
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="character">
-                <User className="h-4 w-4 mr-2" />
-                Karakterler
-              </TabsTrigger>
-              <TabsTrigger value="location">
-                <MapPin className="h-4 w-4 mr-2" />
-                Mekanlar
-              </TabsTrigger>
-              <TabsTrigger value="item">
-                <Briefcase className="h-4 w-4 mr-2" />
-                Eşyalar
-              </TabsTrigger>
-              <TabsTrigger value="event">
-                <Calendar className="h-4 w-4 mr-2" />
-                Olaylar
-              </TabsTrigger>
+                {Object.entries({
+                  character: User,
+                  event: Calendar,
+                  item: Briefcase,
+                  location: MapPin,
+                }).map(([value, Icon]) => (
+                  <TabsTrigger key={value} value={value}>
+                    <Icon className="h-4 w-4 mr-2" />
+                    {t(`${value}s`)}
+                  </TabsTrigger>
+                ))}
             </TabsList>
 
             <TabsContent className="mt-4" value={activeTab}>
               <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-auto pr-1">
                 {filteredEntities.length === 0 ? (
                   <div className="text-center p-8 border rounded-lg bg-muted/20">
-                    <p className="text-muted-foreground">Hiç öğe bulunamadı.</p>
+                      <p className="text-muted-foreground">{t("no_item_found")}</p>
                   </div>
                 ) : (
                   filteredEntities.map((entity) => (
@@ -140,7 +110,7 @@ export function EntityManagementPanel({
                       bookId={bookId}
                       chapterId={chapterId}
                       entity={entity}
-                      key={entity.id}
+                      key={entity.slug}
                       onCompleteNote={onCompleteNote}
                     />
                   ))
@@ -190,7 +160,7 @@ function EntityCard({ bookId, chapterId, entity, onCompleteNote }: EntityCardPro
                 <NoteItem
                   bookId={bookId}
                   chapterId={chapterId}
-                  entityId={entity.id}
+                  entityId={entity.slug}
                   key={note.id}
                   note={note}
                   onComplete={onCompleteNote}

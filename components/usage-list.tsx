@@ -3,21 +3,21 @@ import React from "react"
 import Link from "next/link"
 
 import { Card, CardContent } from "@/components/ui/card"
+import { EntityUsage } from "@/lib/types"
+import { useProject } from "@/providers/project-provider"
+import { goToChapter } from "@/lib/utils/navigateTo"
 
-interface Usage {
-  bookId: string
-  chapterId: string
+interface Usage extends EntityUsage {
   bookTitle: string
   chapterTitle: string
-  count: number
 }
 
 interface UsageListProps {
   usages: Usage[]
-  projectId: string
 }
 
-export function UsageList({ projectId, usages }: UsageListProps) {
+export function UsageList({ usages }: UsageListProps) {
+  const { project } = useProject()
   if (usages.length === 0) {
     return <div className="text-center p-4 text-muted-foreground">Bu öğe henüz hiçbir bölümde kullanılmamış.</div>
   }
@@ -26,8 +26,8 @@ export function UsageList({ projectId, usages }: UsageListProps) {
     <div className="space-y-2">
       {usages.map((usage) => (
         <Link
-          href={`/project/${projectId}/book/${usage.bookId}/chapter/${usage.chapterId}`}
-          key={`${usage.bookId}-${usage.chapterId}`}
+          href={goToChapter({ book: { slug: usage.bookSlug }, chapter: { slug: usage.chapterSlug }, project })}
+          key={`${usage.bookSlug}-${usage.chapterSlug}`}
         >
           <Card className="cursor-pointer hover:bg-muted/20 transition-colors">
             <CardContent className="p-4">
