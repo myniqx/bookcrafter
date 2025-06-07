@@ -53,10 +53,6 @@ export default function BookPage() {
       <div className="flex-1 overflow-auto p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">{t("chapters")}</h2>
-              <CreateChapterDialog />
-            </div>
 
             <ChapterList />
           </div>
@@ -78,7 +74,6 @@ export default function BookPage() {
                     counts={entityCounts}
                     entities={usedEntities}
                     limit={10}
-                    projectId={project.slug}
                   />
                 </div>
               </CardContent>
