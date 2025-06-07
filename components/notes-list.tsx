@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+import { Edit, Save, Trash } from "lucide-react"
+
+import type { Note } from "@/lib/types"
+
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { Note } from "@/lib/types"
-import { Edit, Save, Trash } from "lucide-react"
 import { useProject } from "@/hooks/use-project"
 import { formatDate } from "@/lib/utils"
 
@@ -16,7 +19,7 @@ interface NotesListProps {
   projectId: string
 }
 
-export function NotesList({ notes, entityId, projectId }: NotesListProps) {
+export function NotesList({ entityId, notes, projectId }: NotesListProps) {
   const { project, saveProject } = useProject(projectId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
@@ -45,8 +48,8 @@ export function NotesList({ notes, entityId, projectId }: NotesListProps) {
           if (n.id === note.id) {
             return {
               ...n,
-              title: editTitle,
               content: editContent,
+              title: editTitle,
             }
           }
           return n
@@ -96,21 +99,21 @@ export function NotesList({ notes, entityId, projectId }: NotesListProps) {
           <CardHeader className="py-3">
             <CardTitle className="text-base flex items-center justify-between">
               {editingId === note.id ? (
-                <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="flex-1" />
+                <Input className="flex-1" onChange={(e) => setEditTitle(e.target.value)} value={editTitle} />
               ) : (
                 <span>{note.title}</span>
               )}
               <div className="flex gap-1">
                 {editingId === note.id ? (
-                  <Button size="icon" onClick={() => handleSave(note)}>
+                  <Button onClick={() => handleSave(note)} size="icon">
                     <Save className="h-4 w-4" />
                   </Button>
                 ) : (
                   <>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(note)}>
+                    <Button onClick={() => handleEdit(note)} size="icon" variant="ghost">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(note.id)}>
+                    <Button onClick={() => handleDelete(note.id)} size="icon" variant="ghost">
                       <Trash className="h-4 w-4" />
                     </Button>
                   </>
@@ -120,7 +123,7 @@ export function NotesList({ notes, entityId, projectId }: NotesListProps) {
           </CardHeader>
           <CardContent>
             {editingId === note.id ? (
-              <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={5} />
+              <Textarea onChange={(e) => setEditContent(e.target.value)} rows={5} value={editContent} />
             ) : (
               <div className="text-sm whitespace-pre-wrap">
                 {note.content}

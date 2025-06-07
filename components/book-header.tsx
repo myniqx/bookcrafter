@@ -1,31 +1,26 @@
 "use client"
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
+
 import type { Book } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
+import { goToProject } from "@/lib/utils/navigateTo"
+import { useBook } from "@/providers/book-provider"
+
 import { EditableText } from "./editable-text"
 
-interface BookHeaderProps {
-  book: Book
-  projectId: string
-  hasUnsavedChanges: boolean
-  onTitleChange?: (title: string) => void
-  onDescriptionChange?: (description: string) => void
-}
 
-export function BookHeader({
-  book,
-  projectId,
-  hasUnsavedChanges,
-  onTitleChange,
-  onDescriptionChange,
-}: BookHeaderProps) {
+export function BookHeader() {
+  const { book, hasUnsavedChanges, project, updateBook } = useBook();
+  const projectLink = goToProject({ project })
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Link href={`/${projectId}/project`}>
-          <Button variant="ghost" size="icon" className="rounded-full">
+        <Link href={projectLink}>
+          <Button className="rounded-full" size="icon" variant="ghost">
             <ArrowLeft className="h-5 w-5" />
             <span className="sr-only">Geri</span>
           </Button>
@@ -33,19 +28,19 @@ export function BookHeader({
         <div className="flex-1">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
             <EditableText
-              value={book.title}
-              onChange={onTitleChange || (() => {})}
-              isTitle
               className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
+              isTitle
+              onChange={(title) => updateBook({ title })}
+              value={book.title}
             />
             {hasUnsavedChanges && <span className="text-red-500">*</span>}
           </h1>
           <div className="text-muted-foreground mt-1">
             <EditableText
-              value={book.description || ""}
-              onChange={onDescriptionChange || (() => {})}
-              placeholder="Kitap açıklaması ekleyin..."
               multiline
+              onChange={(description) => updateBook({ description })}
+              placeholder="Kitap açıklaması ekleyin..."
+              value={book.description || ""}
             />
           </div>
         </div>

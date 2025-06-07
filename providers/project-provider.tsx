@@ -2,11 +2,11 @@
 
 import React, {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
   useMemo,
+  useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import { LocalStorageAdapter } from "@/lib/adapters/local-storage-adapter";
@@ -15,6 +15,7 @@ import type { Book, Chapter, Entity, Project } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useAutosave } from "@/hooks/use-autosave"; // Path updated if hook is in /hooks
 import { useApplication } from "@/providers/application-provider";
+import { useLanguage } from "@/contexts/language-context";
 
 interface ProjectContextType {
   project: Project;
@@ -48,14 +49,14 @@ interface ProjectProviderProps {
   children: React.ReactNode;
 }
 
-export function ProjectProvider({ projectSlug, children }: ProjectProviderProps) {
+export function ProjectProvider({ children, projectSlug }: ProjectProviderProps) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
-  const router = useRouter(); // router here is fine for potential future navigation logic within the provider
+  const { t } = useLanguage();
   const { toast } = useToast();
-  const { saveAutosave, deleteAutosave } = useAutosave();
+  const { deleteAutosave, saveAutosave } = useAutosave();
 
   const { isElectron } = useApplication();
 
@@ -112,10 +113,10 @@ export function ProjectProvider({ projectSlug, children }: ProjectProviderProps)
           }
 
           toast({
-            title: "Proje kaydedildi",
             description: isElectron
               ? "Proje dosya sistemine kaydedildi."
               : "Proje tarayıcı depolamasına kaydedildi.",
+            title: "Proje kaydedildi",
           });
 
           return true;
@@ -126,9 +127,9 @@ export function ProjectProvider({ projectSlug, children }: ProjectProviderProps)
         console.error("Error saving project:", err);
 
         toast({
-          title: "Proje kaydetme hatası",
           description:
             "Projenizi kaydetme sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+          title: "Proje kaydetme hatası",
           variant: "destructive",
         });
 
@@ -199,8 +200,10 @@ export function ProjectProvider({ projectSlug, children }: ProjectProviderProps)
     (bookSlug: string, chapter: Chapter) => {
       if (!project) return;
 
+      let bookFound = false
       const updatedBooks = project.books.map((book) => {
         if (book.slug === bookSlug) {
+          bookFound = true
           return {
             ...book,
             chapters: [...book.chapters, chapter],
@@ -208,6 +211,20 @@ export function ProjectProvider({ projectSlug, children }: ProjectProviderProps)
         }
         return book;
       });
+
+      if (!bookFound) {
+        toast({
+          description: t("chapter_created_failed_description", { bookSlug, title: chapter.title }),
+          title: t("chapter_created_failed"),
+          variant: "destructive",
+        })
+        return
+      }
+      toast({
+        description: t("chapter_created_description", { title: chapter.title }),
+        title: t("chapter_created"),
+        variant: "success",
+      })
 
       const updatedProject = {
         ...project,
@@ -340,21 +357,21 @@ export function ProjectProvider({ projectSlug, children }: ProjectProviderProps)
   // Tüm değerleri memoize ediyoruz ki gereksiz render'lar önlensin
   const contextValue = useMemo(
     () => ({
-      project: project!,
-      loading,
-      error,
-      saveProject,
-      updateProject,
       addBook,
-      updateBook,
       addChapter,
-      updateChapter,
       addEntity,
-      updateEntity,
+      error,
       getBook,
       getChapter,
       getEntity,
       hasUnsavedChanges,
+      loading,
+      project: project!,
+      saveProject,
+      updateBook,
+      updateChapter,
+      updateEntity,
+      updateProject,
     }),
     [
       project,

@@ -1,4 +1,5 @@
 import { diffWords } from "diff"
+
 import type { TextDiff } from "../types"
 
 /**
@@ -9,11 +10,11 @@ export function generateTextDiff(originalText: string, suggestedText: string): T
 
   return differences.map((part) => {
     if (part.added) {
-      return { type: "insert", text: part.value }
+      return { text: part.value, type: "insert" }
     } else if (part.removed) {
-      return { type: "delete", text: part.value }
+      return { text: part.value, type: "delete" }
     } else {
-      return { type: "equal", text: part.value }
+      return { text: part.value, type: "equal" }
     }
   })
 }

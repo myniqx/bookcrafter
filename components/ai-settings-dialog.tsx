@@ -1,6 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+
+import type { AIProvider, AISettings, OllamaModel } from "@/lib/types"
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,7 +18,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { useToast } from "@/components/ui/use-toast"
-import type { AISettings, AIProvider, OllamaModel } from "@/lib/types"
 import { OllamaAdapter } from "@/lib/ai/ollama-adapter"
 
 interface AISettingsDialogProps {
@@ -25,7 +27,7 @@ interface AISettingsDialogProps {
   onSave: (settings: AISettings) => void
 }
 
-export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISettingsDialogProps) {
+export function AISettingsDialog({ onOpenChange, onSave, open, settings }: AISettingsDialogProps) {
   const [formData, setFormData] = useState<AISettings>(settings)
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([])
   const [loadingModels, setLoadingModels] = useState(false)
@@ -49,8 +51,8 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
       setOllamaModels(models)
     } catch (error) {
       toast({
-        title: "Error",
         description: "Failed to load Ollama models. Make sure Ollama is running.",
+        title: "Error",
         variant: "destructive",
       })
     } finally {
@@ -62,8 +64,8 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
     onSave(formData)
     onOpenChange(false)
     toast({
-      title: "Settings saved",
       description: "AI settings have been updated successfully.",
+      title: "Settings saved",
     })
   }
 
@@ -71,19 +73,19 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
     switch (formData.provider) {
       case "openai":
         return [
-          { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-          { value: "gpt-4", label: "GPT-4" },
-          { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+          { label: "GPT-3.5 Turbo", value: "gpt-3.5-turbo" },
+          { label: "GPT-4", value: "gpt-4" },
+          { label: "GPT-4 Turbo", value: "gpt-4-turbo" },
         ]
       case "gemini":
         return [
-          { value: "gemini-pro", label: "Gemini Pro" },
-          { value: "gemini-pro-vision", label: "Gemini Pro Vision" },
+          { label: "Gemini Pro", value: "gemini-pro" },
+          { label: "Gemini Pro Vision", value: "gemini-pro-vision" },
         ]
       case "ollama":
         return ollamaModels.map((model) => ({
-          value: model.name,
           label: model.name,
+          value: model.name,
         }))
       default:
         return []
@@ -91,7 +93,7 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>AI Settings</DialogTitle>
@@ -102,8 +104,8 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
           <div className="grid gap-2">
             <Label htmlFor="provider">AI Provider</Label>
             <Select
+              onValueChange={(value: AIProvider) => setFormData({ ...formData, model: "", provider: value })}
               value={formData.provider}
-              onValueChange={(value: AIProvider) => setFormData({ ...formData, provider: value, model: "" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select AI provider" />
@@ -121,10 +123,10 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
               <Label htmlFor="apiKey">API Key</Label>
               <Input
                 id="apiKey"
-                type="password"
-                value={formData.apiKey || ""}
                 onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                 placeholder="Enter your API key"
+                type="password"
+                value={formData.apiKey || ""}
               />
             </div>
           )}
@@ -134,11 +136,11 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
               <Label htmlFor="ollamaUrl">Ollama URL</Label>
               <Input
                 id="ollamaUrl"
-                value={formData.ollamaUrl || "http://localhost:11434"}
                 onChange={(e) => setFormData({ ...formData, ollamaUrl: e.target.value })}
                 placeholder="http://localhost:11434"
+                value={formData.ollamaUrl || "http://localhost:11434"}
               />
-              <Button type="button" variant="outline" size="sm" onClick={loadOllamaModels} disabled={loadingModels}>
+              <Button disabled={loadingModels} onClick={loadOllamaModels} size="sm" type="button" variant="outline">
                 {loadingModels ? "Loading..." : "Refresh Models"}
               </Button>
             </div>
@@ -146,7 +148,7 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
 
           <div className="grid gap-2">
             <Label htmlFor="model">Model</Label>
-            <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value })}>
+            <Select onValueChange={(value) => setFormData({ ...formData, model: value })} value={formData.model}>
               <SelectTrigger>
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
@@ -164,11 +166,11 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
             <Label htmlFor="temperature">Temperature: {formData.temperature || 0.7}</Label>
             <Slider
               id="temperature"
-              min={0}
               max={2}
+              min={0}
+              onValueChange={([value]) => setFormData({ ...formData, temperature: value })}
               step={0.1}
               value={[formData.temperature || 0.7]}
-              onValueChange={([value]) => setFormData({ ...formData, temperature: value })}
             />
           </div>
 
@@ -176,20 +178,20 @@ export function AISettingsDialog({ open, onOpenChange, settings, onSave }: AISet
             <Label htmlFor="maxTokens">Max Tokens</Label>
             <Input
               id="maxTokens"
+              max={4000}
+              min={1}
+              onChange={(e) => setFormData({ ...formData, maxTokens: Number.parseInt(e.target.value) || 1000 })}
               type="number"
               value={formData.maxTokens || 1000}
-              onChange={(e) => setFormData({ ...formData, maxTokens: Number.parseInt(e.target.value) || 1000 })}
-              min={1}
-              max={4000}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave}>
+          <Button onClick={handleSave} type="button">
             Save Settings
           </Button>
         </DialogFooter>

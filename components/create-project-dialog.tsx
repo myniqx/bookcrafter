@@ -1,9 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
 import { useRouter } from "next/navigation"
+
+import type { AdapterType } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -12,21 +16,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import { useProjects } from "@/hooks/use-projects"
-import type { AdapterType } from "@/lib/types"
 import { generateId, slugify } from "@/lib/utils"
+import { goToProject } from "@/lib/utils/navigateTo"
 
 interface CreateProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogProps) {
   const router = useRouter()
   const { createProject } = useProjects()
   const [name, setName] = useState("")
@@ -53,19 +56,19 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
 
 
       await createProject({
-        slug,
-        name: trimmedName,
-        description: description.trim() || undefined,
-        createdAt: now,
-        updatedAt: now,
         adapterType,
         books: [],
+        createdAt: now,
+        description: description.trim() || undefined,
         entities: [],
-        images: []
+        images: [],
+        name: trimmedName,
+        slug,
+        updatedAt: now
       })
 
       onOpenChange(false)
-      router.push(`/project/${slug}`)
+      goToProject({ projectSlug: slug, router })
     } catch (err) {
       console.error("Proje oluşturulurken hata oluştu:", err)
       setError("Proje oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.")
@@ -75,7 +78,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -90,9 +93,9 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
               <Label htmlFor="name">Proje Adı</Label>
               <Input
                 id="name"
-                value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Örn: Fantastik Dünya Serisi"
+                value={name}
               />
             </div>
 
@@ -100,30 +103,30 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
               <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
               <Textarea
                 id="description"
-                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Projenizin kısa bir açıklaması"
                 rows={3}
+                value={description}
               />
             </div>
 
             <div className="grid gap-2">
               <Label>Veri Saklama Yöntemi</Label>
-              <RadioGroup value={adapterType} onValueChange={(value) => setAdapterType(value as AdapterType)}>
+              <RadioGroup onValueChange={(value) => setAdapterType(value as AdapterType)} value={adapterType}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="localStorage" id="localStorage" />
+                  <RadioGroupItem id="localStorage" value="localStorage" />
                   <Label htmlFor="localStorage">Tarayıcı Depolama (LocalStorage)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="jsonFile" id="jsonFile" />
+                  <RadioGroupItem id="jsonFile" value="jsonFile" />
                   <Label htmlFor="jsonFile">JSON Dosyası (İndir/Yükle)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="compressedFile" id="compressedFile" />
+                  <RadioGroupItem id="compressedFile" value="compressedFile" />
                   <Label htmlFor="compressedFile">Sıkıştırılmış Dosya (.bookcraft)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="directorySync" id="directorySync" />
+                  <RadioGroupItem id="directorySync" value="directorySync" />
                   <Label htmlFor="directorySync">Klasör Senkronizasyonu</Label>
                 </div>
               </RadioGroup>
@@ -143,10 +146,10 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button disabled={isSubmitting} onClick={() => onOpenChange(false)} type="button" variant="outline">
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
             </Button>
           </DialogFooter>

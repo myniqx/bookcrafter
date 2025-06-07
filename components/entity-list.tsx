@@ -1,14 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
+
+import { Briefcase, Calendar, MapPin, Plus, Search, User } from "lucide-react"
+
 import type { Entity, EntityType } from "@/lib/types"
-import { Search, User, MapPin, Briefcase, Calendar, Plus } from "lucide-react"
-import { CreateEntityForm } from "./create-entity-form"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useProject } from "@/providers/project-provider"
+
+import { CreateEntityForm } from "./create-entity-form"
 
 interface EntityListProps {
   entities: Entity[]
@@ -24,16 +28,16 @@ interface EntityListProps {
 
 export function EntityList({
   activeType,
-  onTypeChange,
   onCreateCharacter,
-  onCreateLocation,
-  onCreateItem,
   onCreateEvent,
+  onCreateItem,
+  onCreateLocation,
   onSelectEntity,
+  onTypeChange,
 }: EntityListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { project, addEntity, updateEntity } = useProject()
+  const { addEntity, project, updateEntity } = useProject()
   
   if (!project) {
     return null
@@ -88,11 +92,11 @@ export function EntityList({
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{getEntityTypeTitle()}</h2>
         <Button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          variant={showCreateForm ? "secondary" : "default"}
           className={
             showCreateForm ? "" : "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           }
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          variant={showCreateForm ? "secondary" : "default"}
         >
           {showCreateForm ? (
             "İptal"
@@ -115,8 +119,8 @@ export function EntityList({
       {showCreateForm ? (
         <CreateEntityForm
           entityType={activeType}
-          onCreateEntity={handleCreateEntity}
           onCancel={() => setShowCreateForm(false)}
+          onCreateEntity={handleCreateEntity}
         />
       ) : (
         <>
@@ -124,15 +128,15 @@ export function EntityList({
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Öğe adı veya slug ile ara..."
                 className="pl-8"
-                value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Öğe adı veya slug ile ara..."
+                value={searchTerm}
               />
             </div>
           </div>
 
-          <Tabs value={activeType} onValueChange={(value) => onTypeChange(value as EntityType)}>
+          <Tabs onValueChange={(value) => onTypeChange(value as EntityType)} value={activeType}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="character">
                 <User className="h-4 w-4 mr-2" />
@@ -152,7 +156,7 @@ export function EntityList({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeType} className="mt-4">
+            <TabsContent className="mt-4" value={activeType}>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredEntities.length === 0 ? (
                   <div className="md:col-span-2 lg:col-span-3 text-center p-8 border rounded-lg bg-muted/20">
@@ -161,8 +165,8 @@ export function EntityList({
                 ) : (
                   filteredEntities.map((entity) => (
                     <Card
-                      key={entity.id}
                       className="cursor-pointer hover:bg-muted/20 transition-colors"
+                      key={entity.id}
                       onClick={() => onSelectEntity(entity)}
                     >
                       <CardHeader>

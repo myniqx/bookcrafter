@@ -70,8 +70,8 @@ export class DirectorySyncAdapter implements StorageAdapter {
 
   async getProjects(): Promise<ProjectBase[]> {
     return Array.from(this.projectsCache.values()).map((project) => ({
-      slug: project.slug,
       name: project.name,
+      slug: project.slug,
       updatedAt: project.updatedAt,
     }))
   }

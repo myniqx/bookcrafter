@@ -1,9 +1,10 @@
 "use client"
-import { BookProvider } from "@/providers/book-provider"
 import React, { Usable } from "react"
 
+import { BookProvider } from "@/providers/book-provider"
 
-export default ({ children, params }: {
+
+const BookLayout = ({ children, params }: {
   children: React.ReactNode,
   params: Usable<{ bookSlug: string }>
 }) => {
@@ -15,3 +16,5 @@ export default ({ children, params }: {
     </BookProvider>
   )
 }
+
+export default BookLayout

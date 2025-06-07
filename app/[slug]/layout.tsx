@@ -1,8 +1,9 @@
 "use client"
 import React, { Usable } from "react"
+
+import { HeaderNavigation } from "@/components/header-navigation"
 import { SidebarNavigation } from "@/components/sidebar-navigation"
 import { ProjectProvider } from "@/providers/project-provider"
-import { HeaderNavigation } from "@/components/header-navigation"
 
 export default function ProjectLayout({
   children,

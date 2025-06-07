@@ -1,22 +1,24 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import type { Book, Chapter } from "@/lib/types"
-import { formatDate } from "@/lib/utils"
+"use client"
+import React from "react"
+
 import { ChevronLeft } from "lucide-react"
+import Link from "next/link"
 
-interface ChapterHeaderProps {
-  chapter: Chapter
-  book: Book
-  projectId: string
-  hasUnsavedChanges?: boolean
-}
+import { Button } from "@/components/ui/button"
+import { formatDate } from "@/lib/utils"
+import { goToChapter } from "@/lib/utils/navigateTo"
+import { useChapter } from "@/providers/chapter-provider"
 
-export function ChapterHeader({ chapter, book, projectId, hasUnsavedChanges = false }: ChapterHeaderProps) {
+
+export function ChapterHeader() {
+  const { book, chapter, hasUnsavedChanges, project } = useChapter();
+  const backLink = goToChapter({ book, project })
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/50">
-          <Link href={`/project/${projectId}/book/${book.id}`}>
+        <Button asChild className="rounded-full hover:bg-muted/50" size="icon" variant="ghost">
+          <Link href={backLink}>
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Geri</span>
           </Link>

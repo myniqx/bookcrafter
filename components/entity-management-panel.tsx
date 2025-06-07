@@ -1,14 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+
+import { Briefcase, Calendar, Check, MapPin, Plus, Search, User } from "lucide-react"
+
 import type { Entity, EntityType, Note } from "@/lib/types"
-import { Search, User, MapPin, Briefcase, Calendar, Plus, Check } from "lucide-react"
-import { CreateEntityForm } from "./create-entity-form"
-import { Checkbox } from "@/components/ui/checkbox"
+
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+import { CreateEntityForm } from "./create-entity-form"
 
 interface EntityManagementPanelProps {
   entities: Entity[]
@@ -19,11 +23,11 @@ interface EntityManagementPanelProps {
 }
 
 export function EntityManagementPanel({
-  entities,
-  onCreateEntity,
-  onCompleteNote,
   bookId,
   chapterId,
+  entities,
+  onCompleteNote,
+  onCreateEntity,
 }: EntityManagementPanelProps) {
   const [activeTab, setActiveTab] = useState<EntityType>("character")
   const [searchTerm, setSearchTerm] = useState("")
@@ -60,11 +64,11 @@ export function EntityManagementPanel({
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">{getEntityTypeTitle()}</h2>
         <Button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          variant={showCreateForm ? "secondary" : "default"}
           className={
             showCreateForm ? "" : "bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           }
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          variant={showCreateForm ? "secondary" : "default"}
         >
           {showCreateForm ? (
             "İptal"
@@ -87,8 +91,8 @@ export function EntityManagementPanel({
       {showCreateForm ? (
         <CreateEntityForm
           entityType={activeTab}
-          onCreateEntity={handleCreateEntity}
           onCancel={() => setShowCreateForm(false)}
+          onCreateEntity={handleCreateEntity}
         />
       ) : (
         <>
@@ -96,15 +100,15 @@ export function EntityManagementPanel({
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Öğe adı veya slug ile ara..."
                 className="pl-8"
-                value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Öğe adı veya slug ile ara..."
+                value={searchTerm}
               />
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EntityType)}>
+          <Tabs onValueChange={(value) => setActiveTab(value as EntityType)} value={activeTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="character">
                 <User className="h-4 w-4 mr-2" />
@@ -124,7 +128,7 @@ export function EntityManagementPanel({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeTab} className="mt-4">
+            <TabsContent className="mt-4" value={activeTab}>
               <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-auto pr-1">
                 {filteredEntities.length === 0 ? (
                   <div className="text-center p-8 border rounded-lg bg-muted/20">
@@ -133,11 +137,11 @@ export function EntityManagementPanel({
                 ) : (
                   filteredEntities.map((entity) => (
                     <EntityCard
-                      key={entity.id}
-                      entity={entity}
-                      onCompleteNote={onCompleteNote}
                       bookId={bookId}
                       chapterId={chapterId}
+                      entity={entity}
+                      key={entity.id}
+                      onCompleteNote={onCompleteNote}
                     />
                   ))
                 )}
@@ -157,7 +161,7 @@ interface EntityCardProps {
   chapterId: string
 }
 
-function EntityCard({ entity, onCompleteNote, bookId, chapterId }: EntityCardProps) {
+function EntityCard({ bookId, chapterId, entity, onCompleteNote }: EntityCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   // Filter notes that are not completed or completed in this chapter
@@ -184,12 +188,12 @@ function EntityCard({ entity, onCompleteNote, bookId, chapterId }: EntityCardPro
               <h4 className="text-sm font-medium">Notlar:</h4>
               {relevantNotes.map((note) => (
                 <NoteItem
-                  key={note.id}
-                  note={note}
-                  entityId={entity.id}
-                  onComplete={onCompleteNote}
                   bookId={bookId}
                   chapterId={chapterId}
+                  entityId={entity.id}
+                  key={note.id}
+                  note={note}
+                  onComplete={onCompleteNote}
                 />
               ))}
             </div>
@@ -210,23 +214,23 @@ interface NoteItemProps {
   chapterId: string
 }
 
-function NoteItem({ note, entityId, onComplete, bookId, chapterId }: NoteItemProps) {
+function NoteItem({ bookId, chapterId, entityId, note, onComplete }: NoteItemProps) {
   const isCompletedHere =
     note.completed && note.completedIn?.bookId === bookId && note.completedIn?.chapterId === chapterId
 
   return (
     <div className="flex items-start gap-2 p-2 border rounded-md bg-muted/10 hover:bg-muted/20 transition-colors">
       <Checkbox
-        id={`note-${note.id}`}
         checked={isCompletedHere}
+        id={`note-${note.id}`}
         onCheckedChange={(checked) => {
           onComplete(entityId, note.id, checked === true)
         }}
       />
       <div className="flex-1">
         <label
-          htmlFor={`note-${note.id}`}
           className={`text-sm font-medium cursor-pointer ${isCompletedHere ? "line-through text-muted-foreground" : ""}`}
+          htmlFor={`note-${note.id}`}
         >
           {note.title}
         </label>

@@ -1,8 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import { DialogClose, DialogTrigger } from "@radix-ui/react-dialog"
+import { Plus } from "lucide-react"
+
+import type { Book } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,16 +17,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Book } from "@/lib/types"
+import { useLanguage } from "@/contexts/language-context"
 import { generateId, slugify } from "@/lib/utils"
 import { useProject } from "@/providers/project-provider"
-import { DialogClose, DialogTrigger } from "@radix-ui/react-dialog"
-import { Plus } from "lucide-react"
-import { useLanguage } from "@/contexts/language-context"
 
 export function CreateBookDialog() {
   const { project, updateProject } = useProject()
@@ -56,12 +58,12 @@ export function CreateBookDialog() {
       const now = new Date().toISOString()
 
       const newBook: Book = {
+        chapters: [],
+        createdAt: now,
+        description: description.trim() || undefined,
         slug,
         title: trimmedTitle,
-        description: description.trim() || undefined,
-        createdAt: now,
         updatedAt: now,
-        chapters: [],
       }
 
       updateProject({
@@ -102,9 +104,9 @@ export function CreateBookDialog() {
               <Label htmlFor="title">Kitap Başlığı</Label>
               <Input
                 id="title"
-                value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Örn: Karanlık Ormanın Sırları"
+                value={title}
               />
             </div>
 
@@ -112,10 +114,10 @@ export function CreateBookDialog() {
               <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
               <Textarea
                 id="description"
-                value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Kitabınızın kısa bir açıklaması"
                 rows={3}
+                value={description}
               />
             </div>
 
@@ -124,12 +126,12 @@ export function CreateBookDialog() {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
+              <Button disabled={isSubmitting} type="button" variant="outline">
                 İptal
               </Button>
             </DialogClose>
             <DialogClose asChild>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button disabled={isSubmitting} type="submit">
                 {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
               </Button>
             </DialogClose>

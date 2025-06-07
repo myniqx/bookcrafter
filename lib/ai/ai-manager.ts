@@ -1,8 +1,9 @@
-import { OpenAIAdapter } from "./openai-adapter"
+import type { AIPromptTemplate, AIProvider, AIRequest, AIResponse } from "../types"
+import type { AIAdapter } from "./ai-adapter"
+
 import { GeminiAdapter } from "./gemini-adapter"
 import { OllamaAdapter } from "./ollama-adapter"
-import type { AIAdapter } from "./ai-adapter"
-import type { AIProvider, AIRequest, AIResponse, AIPromptTemplate } from "../types"
+import { OpenAIAdapter } from "./openai-adapter"
 
 export class AIManager {
   private adapters: Map<AIProvider, AIAdapter> = new Map()
@@ -22,19 +23,19 @@ export class AIManager {
 
     if (!adapter) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: `Unsupported AI provider: ${request.settings.provider}`,
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
 
     if (!adapter.validateSettings(request.settings)) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: "Invalid AI settings",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
 
@@ -44,56 +45,56 @@ export class AIManager {
   getDefaultPromptTemplates(): AIPromptTemplate[] {
     return [
       {
-        id: "grammar-check",
-        name: "Grammar Check",
+        category: "grammar",
         description: "Check and correct grammar errors",
+        id: "grammar-check",
+        isDefault: true,
+        name: "Grammar Check",
         prompt:
           "Please check the following text for grammar errors and provide a corrected version. Only fix grammar issues, don't change the style or meaning.",
-        category: "grammar",
-        isDefault: true,
       },
       {
-        id: "improve-flow",
-        name: "Improve Flow",
+        category: "style",
         description: "Make the text more fluent and readable",
+        id: "improve-flow",
+        isDefault: true,
+        name: "Improve Flow",
         prompt:
           "Please improve the flow and readability of the following text while maintaining its original meaning and style.",
-        category: "style",
-        isDefault: true,
       },
       {
-        id: "expand-scene",
-        name: "Expand Scene",
+        category: "creative",
         description: "Add more detail and description to a scene",
+        id: "expand-scene",
+        isDefault: true,
+        name: "Expand Scene",
         prompt:
           "Please expand the following scene with more vivid descriptions, sensory details, and character emotions while maintaining the narrative flow.",
-        category: "creative",
-        isDefault: true,
       },
       {
-        id: "dialogue-improvement",
-        name: "Improve Dialogue",
+        category: "creative",
         description: "Make dialogue more natural and engaging",
+        id: "dialogue-improvement",
+        isDefault: true,
+        name: "Improve Dialogue",
         prompt:
           "Please improve the dialogue in the following text to make it more natural, engaging, and character-appropriate.",
-        category: "creative",
-        isDefault: true,
       },
       {
-        id: "translate-to-english",
-        name: "Translate to English",
+        category: "translation",
         description: "Translate text to English",
-        prompt: "Please translate the following text to English while maintaining the original tone and meaning.",
-        category: "translation",
+        id: "translate-to-english",
         isDefault: true,
+        name: "Translate to English",
+        prompt: "Please translate the following text to English while maintaining the original tone and meaning.",
       },
       {
-        id: "translate-to-turkish",
-        name: "Translate to Turkish",
-        description: "Translate text to Turkish",
-        prompt: "Please translate the following text to Turkish while maintaining the original tone and meaning.",
         category: "translation",
+        description: "Translate text to Turkish",
+        id: "translate-to-turkish",
         isDefault: true,
+        name: "Translate to Turkish",
+        prompt: "Please translate the following text to Turkish while maintaining the original tone and meaning.",
       },
     ]
   }

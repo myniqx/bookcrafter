@@ -14,7 +14,7 @@ export abstract class BaseAIAdapter implements AIAdapter {
   abstract validateSettings(settings: AISettings): boolean
 
   protected buildPrompt(request: AIRequest): string {
-    const { prompt, selectedText, context } = request
+    const { context, prompt, selectedText } = request
 
     let fullPrompt = `Project: ${context.projectName}\n\n`
 

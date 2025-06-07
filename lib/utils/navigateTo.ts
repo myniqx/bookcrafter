@@ -1,23 +1,46 @@
 import { useRouter } from "next/navigation";
 
+import { Book, Chapter, Entity, Project } from "../types";
 
+interface GoToProjectProps {
+  project: Project
+  router?: ReturnType<typeof useRouter>
+  params?: string
+}
 
-export const goToProject = (projectSlug: string, router?: ReturnType<typeof useRouter>) => {
-  if (router) return router.push(`/${projectSlug}/project`);
-  return `/${projectSlug}/project`;
+interface GotoEntitiesProps extends GoToProjectProps {
+  entity?: Pick<Entity, 'slug'>
+}
+
+interface GotoBookProps extends GoToProjectProps {
+  book?: Book
+}
+
+interface GotoChapterProps extends GoToProjectProps {
+  book: Book
+  chapter?: Chapter
+}
+
+export const goToProject = ({ params, project, router }: GoToProjectProps) => {
+  const link = `/${project.slug}/project${params ? `?${params}` : ''}`
+  if (router) router.push(link)
+  return link
 };
 
-export const goToBook = (projectSlug: string, bookSlug?: string, router?: ReturnType<typeof useRouter>) => {
-  if (router) return router.push(`/${projectSlug}/books/${bookSlug || ''}`);
-  return `/${projectSlug}/books/${bookSlug || ''}`;
+export const goToBook = ({ book, params, project, router }: GotoBookProps) => {
+  const link = `/${project.slug}/books${book?.slug ? `/${book.slug}` : ''}${params ? `?${params}` : ''}`
+  if (router) router.push(link)
+  return link
 };
 
-export const goToChapter = (projectSlug: string, bookSlug: string, chapterSlug: string, router?: ReturnType<typeof useRouter>) => {
-  if (router) return router.push(`/${projectSlug}/books/${bookSlug}/${chapterSlug}`);
-  return `/${projectSlug}/books/${bookSlug}/${chapterSlug}`;
+export const goToChapter = ({ book, chapter, params, project, router }: GotoChapterProps) => {
+  const link = `/${project.slug}/books/${book.slug}/chapters${chapter?.slug ? `/${chapter.slug}` : ''}${params ? `?${params}` : ''}`
+  if (router) router.push(link)
+  return link
 };
 
-export const goToEntity = (projectSlug: string, entitySlug?: string, router?: ReturnType<typeof useRouter>) => {
-  if (router) return router.push(`/${projectSlug}/entities/${entitySlug || ''}`);
-  return `/${projectSlug}/entities/${entitySlug || ''}`;
+export const goToEntity = ({ entity, params, project, router }: GotoEntitiesProps) => {
+  const link = `/${project.slug}/entities/${entity?.slug}${params ? `?${params}` : ''}`
+  if (router) router.push(link)
+  return link
 };

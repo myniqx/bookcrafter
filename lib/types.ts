@@ -45,6 +45,7 @@ export interface Book {
 export interface Chapter {
   slug: string
   title: string
+  description?: string
   number?: number
   content?: string
   createdAt: string
@@ -102,7 +103,6 @@ export interface ChapterStatistics {
   wordCount: number
   characterCount: number
   entityUsage: {
-    entityId: string
     entityName: string
     entitySlug: string
     count: number

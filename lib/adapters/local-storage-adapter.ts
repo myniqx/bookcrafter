@@ -1,4 +1,5 @@
 import type { Project, ProjectBase } from "@/lib/types"
+
 import { StorageAdapter } from "./adapter"
 
 export class LocalStorageAdapter implements StorageAdapter {
@@ -55,14 +56,14 @@ export class LocalStorageAdapter implements StorageAdapter {
 
       if (existingIndex >= 0) {
         projects[existingIndex] = {
-          slug: project.slug,
           name: project.name,
+          slug: project.slug,
           updatedAt: project.updatedAt,
         }
       } else {
         projects.push({
-          slug: project.slug,
           name: project.name,
+          slug: project.slug,
           updatedAt: project.updatedAt,
         })
       }

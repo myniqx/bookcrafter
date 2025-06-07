@@ -1,9 +1,14 @@
 "use client"
 
 import { useState } from "react"
+
+import { DialogClose } from "@radix-ui/react-dialog"
+import { Archive, Book, Download, File, FileText } from "lucide-react"
+
+import type { ExportFormat, ExportOptions } from "@/lib/types"
+
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -14,16 +19,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Download, FileText, File, Book, Archive } from "lucide-react"
-import type { Project, ExportOptions, ExportFormat } from "@/lib/types"
-import { ExportManager } from "@/lib/export/export-manager"
-import { CompressedFileAdapter } from "@/lib/adapters/compressed-file-adapter"
 import { useToast } from "@/components/ui/use-toast"
+import { CompressedFileAdapter } from "@/lib/adapters/compressed-file-adapter"
+import { ExportManager } from "@/lib/export/export-manager"
 import { useProject } from "@/providers/project-provider"
-import { DialogClose } from "@radix-ui/react-dialog"
 
 
 export function ExportDialog() {
@@ -32,21 +35,21 @@ export function ExportDialog() {
   const [isExporting, setIsExporting] = useState(false)
   const [exportType, setExportType] = useState<"document" | "project">("document")
   const [options, setOptions] = useState<ExportOptions>({
-    format: "pdf",
-    pageSize: "A4",
     chapterStartsOnRight: true,
-    pageNumberAlignment: "center",
-    includeImages: true,
-    includeCover: true,
-    includeTableOfContents: true,
-    fontSize: 11,
     fontFamily: "Arial",
+    fontSize: 11,
+    format: "pdf",
+    includeCover: true,
+    includeImages: true,
+    includeTableOfContents: true,
     margins: {
-      top: 20,
       bottom: 20,
       left: 20,
       right: 20,
+      top: 20,
     },
+    pageNumberAlignment: "center",
+    pageSize: "A4",
   })
   const { toast } = useToast()
 
@@ -71,23 +74,23 @@ export function ExportDialog() {
         URL.revokeObjectURL(url)
 
         toast({
-          title: "Export başarılı",
           description: `${project.name} başarıyla ${options.format.toUpperCase()} formatında export edildi.`,
+          title: "Export başarılı",
         })
 
         onOpenChange(false)
       } else {
         toast({
-          title: "Export hatası",
           description: result.error || "Export işlemi sırasında bir hata oluştu.",
+          title: "Export hatası",
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Export error:", error)
       toast({
-        title: "Export hatası",
         description: "Export işlemi sırasında beklenmeyen bir hata oluştu.",
+        title: "Export hatası",
         variant: "destructive",
       })
     } finally {
@@ -103,8 +106,8 @@ export function ExportDialog() {
 
       if (success) {
         toast({
-          title: "Proje export edildi",
           description: `${project.name} başarıyla .bookcraft dosyası olarak export edildi.`,
+          title: "Proje export edildi",
         })
         onOpenChange(false)
       } else {
@@ -113,8 +116,8 @@ export function ExportDialog() {
     } catch (error) {
       console.error("Project export error:", error)
       toast({
-        title: "Export hatası",
         description: "Proje export edilirken bir hata oluştu.",
+        title: "Export hatası",
         variant: "destructive",
       })
     } finally {
@@ -161,13 +164,13 @@ export function ExportDialog() {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={isOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
           className="rounded-full"
+          size="icon"
           title="Projeyi Export Et"
+          variant="outline"
         >
           <Download className="h-4 w-4" />
         </Button>
@@ -230,11 +233,11 @@ export function ExportDialog() {
                 <CardContent className="space-y-3">
                   {exportManager.getSupportedFormats().map((format) => (
                     <div
-                      key={format}
                       className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${options.format === format
                           ? "border-primary bg-primary/5"
                           : "border-muted hover:border-primary/50"
                         }`}
+                      key={format}
                       onClick={() => setOptions({ ...options, format })}
                     >
                       <div className="flex items-center space-x-2">
@@ -260,8 +263,8 @@ export function ExportDialog() {
                       <div>
                         <Label htmlFor="pageSize">Sayfa Boyutu</Label>
                         <Select
+                          onValueChange={(value) => setOptions({ ...options, pageSize: value as typeof options.pageSize })}
                           value={options.pageSize}
-                          onValueChange={(value) => setOptions({ ...options, pageSize: value as any })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -278,8 +281,8 @@ export function ExportDialog() {
                       <div>
                         <Label htmlFor="pageNumberAlignment">Sayfa Numarası Hizası</Label>
                         <Select
+                          onValueChange={(value) => setOptions({ ...options, pageNumberAlignment: value as typeof options.pageNumberAlignment })}
                           value={options.pageNumberAlignment}
-                          onValueChange={(value) => setOptions({ ...options, pageNumberAlignment: value as any })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -298,19 +301,19 @@ export function ExportDialog() {
                         <Label htmlFor="fontSize">Font Boyutu</Label>
                         <Input
                           id="fontSize"
-                          type="number"
-                          min="8"
                           max="16"
-                          value={options.fontSize}
+                          min="8"
                           onChange={(e) => setOptions({ ...options, fontSize: Number.parseInt(e.target.value) || 11 })}
+                          type="number"
+                          value={options.fontSize}
                         />
                       </div>
 
                       <div>
                         <Label htmlFor="fontFamily">Font Ailesi</Label>
                         <Select
-                          value={options.fontFamily}
                           onValueChange={(value) => setOptions({ ...options, fontFamily: value })}
+                          value={options.fontFamily}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -328,8 +331,8 @@ export function ExportDialog() {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          id="chapterStartsOnRight"
                           checked={options.chapterStartsOnRight}
+                          id="chapterStartsOnRight"
                           onCheckedChange={(checked) =>
                             setOptions({ ...options, chapterStartsOnRight: checked as boolean })
                           }
@@ -349,8 +352,8 @@ export function ExportDialog() {
                 <CardContent className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="includeCover"
                       checked={options.includeCover}
+                      id="includeCover"
                       onCheckedChange={(checked) => setOptions({ ...options, includeCover: checked as boolean })}
                     />
                     <Label htmlFor="includeCover">Kapak resmini dahil et</Label>
@@ -358,8 +361,8 @@ export function ExportDialog() {
 
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="includeTableOfContents"
                       checked={options.includeTableOfContents}
+                      id="includeTableOfContents"
                       onCheckedChange={(checked) =>
                         setOptions({ ...options, includeTableOfContents: checked as boolean })
                       }
@@ -369,8 +372,8 @@ export function ExportDialog() {
 
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="includeImages"
                       checked={options.includeImages}
+                      id="includeImages"
                       onCheckedChange={(checked) => setOptions({ ...options, includeImages: checked as boolean })}
                     />
                     <Label htmlFor="includeImages">Resimleri dahil et</Label>
@@ -383,11 +386,11 @@ export function ExportDialog() {
 
         <DialogFooter>
           <DialogClose>
-            <Button variant="outline" disabled={isExporting}>
+            <Button disabled={isExporting} variant="outline">
               İptal
             </Button>
           </DialogClose>
-          <Button onClick={handleExport} disabled={isExporting}>
+          <Button disabled={isExporting} onClick={handleExport}>
             {isExporting ? "Export ediliyor..." : exportType === "document" ? "Doküman Export Et" : "Proje Export Et"}
           </Button>
         </DialogFooter>

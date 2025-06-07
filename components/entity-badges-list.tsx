@@ -1,23 +1,25 @@
 "use client"
 
 import { useState } from "react"
-import type { Entity } from "@/lib/types"
-import { EntityBadge } from "./entity-badge"
-import { Button } from "@/components/ui/button"
+
 import { ChevronDown, ChevronUp } from "lucide-react"
+
+import type { Entity } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
+
+import { EntityBadge } from "./entity-badge"
 
 interface EntityBadgesListProps {
   entities: Entity[]
-  projectId: string
   counts?: Record<string, number>
   limit?: number
   onSelectEntity?: (entity: Entity) => void
 }
 
 export function EntityBadgesList({
-  entities,
-  projectId,
   counts = {},
+  entities,
   limit = 10,
   onSelectEntity,
 }: EntityBadgesListProps) {
@@ -29,8 +31,8 @@ export function EntityBadgesList({
 
   // Sort entities by count (if provided)
   const sortedEntities = [...entities].sort((a, b) => {
-    const countA = counts[a.id] || 0
-    const countB = counts[b.id] || 0
+    const countA = counts[a.slug] || 0
+    const countB = counts[b.slug] || 0
     return countB - countA
   })
 
@@ -48,17 +50,16 @@ export function EntityBadgesList({
       <div className="flex flex-wrap">
         {displayedEntities.map((entity) => (
           <EntityBadge
-            key={entity.id}
+            count={counts[entity.slug]}
             entity={entity}
-            projectId={projectId}
-            count={counts[entity.id]}
+            key={entity.slug}
             onClick={() => handleEntityClick(entity)}
           />
         ))}
       </div>
 
       {hasMore && (
-        <Button variant="ghost" size="sm" className="text-xs mt-1 h-6 px-2" onClick={() => setShowAll(!showAll)}>
+        <Button className="text-xs mt-1 h-6 px-2" onClick={() => setShowAll(!showAll)} size="sm" variant="ghost">
           {showAll ? (
             <>
               <ChevronUp className="h-3 w-3 mr-1" />

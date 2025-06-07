@@ -1,5 +1,6 @@
-import { BaseAIAdapter } from "./ai-adapter"
 import type { AIRequest, AIResponse, AISettings } from "../types"
+
+import { BaseAIAdapter } from "./ai-adapter"
 
 export class GeminiAdapter extends BaseAIAdapter {
   provider = "gemini"
@@ -9,10 +10,10 @@ export class GeminiAdapter extends BaseAIAdapter {
 
     if (!settings.apiKey) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: "Gemini API key is required",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
 
@@ -20,10 +21,6 @@ export class GeminiAdapter extends BaseAIAdapter {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${settings.model || "gemini-pro"}:generateContent?key=${settings.apiKey}`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             contents: [
               {
@@ -35,10 +32,14 @@ export class GeminiAdapter extends BaseAIAdapter {
               },
             ],
             generationConfig: {
-              temperature: settings.temperature || 0.7,
               maxOutputTokens: settings.maxTokens || 1000,
+              temperature: settings.temperature || 0.7,
             },
           }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
         },
       )
 
@@ -49,21 +50,21 @@ export class GeminiAdapter extends BaseAIAdapter {
       const data = await response.json()
 
       return {
-        success: true,
         originalText: request.selectedText || "",
+        success: true,
         suggestedText: data.candidates?.[0]?.content?.parts?.[0]?.text || "",
         usage: {
-          promptTokens: data.usageMetadata?.promptTokenCount || 0,
           completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
+          promptTokens: data.usageMetadata?.promptTokenCount || 0,
           totalTokens: data.usageMetadata?.totalTokenCount || 0,
         },
       }
     } catch (error) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: error instanceof Error ? error.message : "Unknown error",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
   }

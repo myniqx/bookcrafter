@@ -1,8 +1,10 @@
+import { Briefcase, Calendar, ChevronLeft, MapPin, User } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+
 import type { Entity } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
-import { ChevronLeft, User, MapPin, Briefcase, Calendar } from "lucide-react"
 
 interface EntityHeaderProps {
   entity: Entity
@@ -39,7 +41,7 @@ export function EntityHeader({ entity, projectId }: EntityHeaderProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/50">
+        <Button asChild className="rounded-full hover:bg-muted/50" size="icon" variant="ghost">
           <Link href={`/project/${projectId}`}>
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Geri</span>

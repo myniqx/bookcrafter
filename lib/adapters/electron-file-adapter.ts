@@ -1,5 +1,6 @@
 import type { Project, ProjectBase } from "../types"
 import type { StorageAdapter } from "./adapter"
+
 import { ELECTRON_PATHS } from "../constants"
 
 declare global {
@@ -68,8 +69,8 @@ export class ElectronFileAdapter implements StorageAdapter {
           try {
             const project = JSON.parse(projectData) as Project
             projects.push({
-              slug: project.slug,
               name: project.name,
+              slug: project.slug,
               updatedAt: project.updatedAt,
             } satisfies ProjectBase)
           } catch (error) {
@@ -123,7 +124,7 @@ export class ElectronFileAdapter implements StorageAdapter {
 
   async saveProject(project: Project): Promise<boolean> {
     try {
-      const projectPath = await this.getProjectPath(project.id)
+      const projectPath = await this.getProjectPath(project.slug)
       await window.electronAPI!.fileSystem.ensureDir(projectPath)
 
       // Prepare project data (without base64 image data)

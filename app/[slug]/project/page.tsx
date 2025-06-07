@@ -1,5 +1,11 @@
 "use client"
 
+import { useEffect, useState } from "react"
+
+import { useRouter, useSearchParams } from "next/navigation"
+
+import type { Book, Entity, EntityType, ProjectImage } from "@/lib/types"
+
 import { BooksList } from "@/components/books-list"
 import { CreateBookDialog } from "@/components/create-book-dialog"
 import { CreateEntityDialog } from "@/components/create-entity-dialog"
@@ -11,17 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { formatTranslation, useLanguage } from "@/contexts/language-context"
 import { useAutosave } from "@/hooks/use-autosave"
-
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
-import type { Book, Entity, EntityType, ProjectImage } from "@/lib/types"
+import { goToProject } from "@/lib/utils/navigateTo"
 import { useProject } from "@/providers/project-provider"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
 
 export default function ProjectPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { project, loading, error, saveProject } = useProject()
+  const { error, loading, project, saveProject } = useProject()
   const [activeTab, setActiveTab] = useState("books")
   const [isCreateBookOpen, setIsCreateBookOpen] = useState(false)
   const [isCreateEntityOpen, setIsCreateEntityOpen] = useState(false)
@@ -69,8 +72,8 @@ export default function ProjectPage() {
     setIsCreateBookOpen(false)
 
     toast({
-      title: t("book_created"),
       description: formatTranslation(t("book_created_description"), { title: book.title }),
+      title: t("book_created"),
       variant: "success",
     })
 
@@ -86,8 +89,8 @@ export default function ProjectPage() {
     setIsCreateEntityOpen(false)
 
     toast({
-      title: t("entity_created"),
       description: formatTranslation(t("entity_created_description"), { name: entity.name }),
+      title: t("entity_created"),
       variant: "success",
     })
 
@@ -102,8 +105,8 @@ export default function ProjectPage() {
   const handleSave = () => {
     if (handleManualSave()) {
       toast({
-        title: t("project_saved"),
         description: t("all_changes_saved"),
+        title: t("project_saved"),
         variant: "success",
       })
     }
@@ -265,7 +268,7 @@ export default function ProjectPage() {
 
       <div className="flex-1 overflow-auto p-4">
         <Tabs
-          value={activeTab}
+          className="w-full"
           onValueChange={(value: string) => {
             setActiveTab(value)
             // Update URL
@@ -279,9 +282,9 @@ export default function ProjectPage() {
               params.delete("tab")
               params.delete("type")
             }
-            router.push(`/${project.slug}/project?${params.toString()}`)
+            goToProject({ params: params.toString(), projectSlug: project.slug, router })
           }}
-          className="w-full"
+          value={activeTab}
         >
           <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="books">{t("books_tab")}</TabsTrigger>
@@ -289,50 +292,48 @@ export default function ProjectPage() {
             <TabsTrigger value="images">{t("images_tab")}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="books" className="mt-4">
+          <TabsContent className="mt-4" value="books">
             <BooksList />
           </TabsContent>
 
-          <TabsContent value="entities" className="mt-4">
+          <TabsContent className="mt-4" value="entities">
             <EntityList
-              entities={project.entities}
-              projectId={project.id}
               activeType={entityType}
+              entities={project.entities}
+              onCreateCharacter={() => openCreateEntityDialog("character")}
+              onCreateEvent={() => openCreateEntityDialog("event")}
+              onCreateItem={() => openCreateEntityDialog("item")}
+              onCreateLocation={() => openCreateEntityDialog("location")}
               onTypeChange={(type) => {
                 // Update URL
                 const params = new URLSearchParams(searchParams)
                 params.set("type", type)
-                router.push(`/project/${project.id}?${params.toString()}`)
+                goToProject({ params: params.toString(), projectSlug: project.slug, router })
               }}
-              onCreateCharacter={() => openCreateEntityDialog("character")}
-              onCreateLocation={() => openCreateEntityDialog("location")}
-              onCreateItem={() => openCreateEntityDialog("item")}
-              onCreateEvent={() => openCreateEntityDialog("event")}
+              projectId={project.id}
             />
           </TabsContent>
 
-          <TabsContent value="images" className="mt-4">
+          <TabsContent className="mt-4" value="images">
             <ImageManager
+              backgroundImageId={project.backgroundImageId}
+              coverImageId={project.coverImageId}
               images={project.images || []}
               onAddImage={handleAddImage}
               onRemoveImage={handleRemoveImage}
-              onSetCoverImage={handleSetCoverImage}
               onSetBackgroundImage={handleSetBackgroundImage}
-              coverImageId={project.coverImageId}
-              backgroundImageId={project.backgroundImageId}
+              onSetCoverImage={handleSetCoverImage}
             />
           </TabsContent>
         </Tabs>
       </div>
 
       <CreateEntityDialog
-        open={isCreateEntityOpen}
-        onOpenChange={setIsCreateEntityOpen}
         entityType={selectedEntityType}
         onCreateEntity={handleCreateEntity}
+        onOpenChange={setIsCreateEntityOpen}
+        open={isCreateEntityOpen}
       />
-
-      <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} project={project} />
 
     </>
   )

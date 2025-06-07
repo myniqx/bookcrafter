@@ -1,6 +1,10 @@
 "use client"
 
 import { useState } from "react"
+
+import type { TextDiff } from "@/lib/types"
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,9 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { TextDiff } from "@/lib/types"
 import { applyDiffChanges } from "@/lib/utils/text-diff"
 
 interface AITextDiffModalProps {
@@ -25,12 +27,12 @@ interface AITextDiffModalProps {
 }
 
 export function AITextDiffModal({
-  open,
-  onOpenChange,
-  originalText,
-  suggestedText,
   diffs,
   onApply,
+  onOpenChange,
+  open,
+  originalText,
+  suggestedText,
 }: AITextDiffModalProps) {
   const [acceptedChanges, setAcceptedChanges] = useState<Set<number>>(
     new Set(diffs.map((_, index) => index).filter((index) => diffs[index].type === "insert")),
@@ -62,7 +64,7 @@ export function AITextDiffModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[800px] max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Review AI Suggestions</DialogTitle>
@@ -86,7 +88,7 @@ export function AITextDiffModal({
                 {diffs.map((diff, index) => {
                   if (diff.type === "equal") {
                     return (
-                      <span key={index} className="text-gray-700">
+                      <span className="text-gray-700" key={index}>
                         {diff.text}
                       </span>
                     )
@@ -94,10 +96,10 @@ export function AITextDiffModal({
                     const isAccepted = !acceptedChanges.has(index)
                     return (
                       <span
-                        key={index}
                         className={`cursor-pointer rounded px-1 ${
                           isAccepted ? "bg-red-100 text-red-800 line-through" : "bg-red-200 text-red-900"
                         }`}
+                        key={index}
                         onClick={() => toggleChange(index)}
                         title="Click to toggle deletion"
                       >
@@ -108,10 +110,10 @@ export function AITextDiffModal({
                     const isAccepted = acceptedChanges.has(index)
                     return (
                       <span
-                        key={index}
                         className={`cursor-pointer rounded px-1 ${
                           isAccepted ? "bg-green-100 text-green-800" : "bg-green-200 text-green-900 opacity-50"
                         }`}
+                        key={index}
                         onClick={() => toggleChange(index)}
                         title="Click to toggle insertion"
                       >
@@ -133,16 +135,16 @@ export function AITextDiffModal({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={handleRejectAll}>
+          <Button onClick={handleRejectAll} type="button" variant="outline">
             Reject All
           </Button>
-          <Button type="button" variant="outline" onClick={handleAcceptAll}>
+          <Button onClick={handleAcceptAll} type="button" variant="outline">
             Accept All
           </Button>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
             Cancel
           </Button>
-          <Button type="button" onClick={handleApply}>
+          <Button onClick={handleApply} type="button">
             Apply Changes
           </Button>
         </DialogFooter>

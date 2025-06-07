@@ -84,8 +84,8 @@ export class JsonFileAdapter implements StorageAdapter {
   async getProjects(): Promise<ProjectBase[]> {
     // For JSON file adapter, we can only list projects that are in the cache
     return Array.from(this.projectsCache.values()).map((project) => ({
-      slug: project.slug,
       name: project.name,
+      slug: project.slug,
       updatedAt: project.updatedAt,
     }))
   }

@@ -1,25 +1,26 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { ChapterStatistics, Entity } from "@/lib/types"
+import { BarChart, BookOpen, Check, FileText, Hash } from "lucide-react"
 import Link from "next/link"
-import { BarChart, BookOpen, FileText, Hash, Check } from "lucide-react"
+
+import type { ChapterStatistics, Entity } from "@/lib/types"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useChapter } from "@/providers/chapter-provider"
+import { goToEntity } from "@/lib/utils/navigateTo"
 
 interface ChapterStatisticsViewProps {
-  statistics: ChapterStatistics
-  entities: Entity[]
-  projectId: string
-  bookId: string
-  chapterId: string
+  statistics?: ChapterStatistics | null
 }
 
 export function ChapterStatisticsView({
   statistics,
-  entities,
-  projectId,
-  bookId,
-  chapterId,
 }: ChapterStatisticsViewProps) {
+  const { book, chapter, project } = useChapter()
+  const entities = project.entities
+
+  if (!statistics) return null
+
   return (
     <div className="space-y-6 h-full overflow-auto pr-1">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -67,7 +68,7 @@ export function ChapterStatisticsView({
           ) : (
             <div className="space-y-4 max-h-[calc(100vh-500px)] overflow-auto pr-1">
               {statistics.entityUsage.map((usage) => {
-                const entity = entities.find((e) => e.id === usage.entityId)
+                const entity = entities.find((e) => e.slug === usage.entitySlug)
                 if (!entity) return null
 
                 // Get completed notes for this entity
@@ -75,16 +76,16 @@ export function ChapterStatisticsView({
                   entity.notes?.filter(
                     (note) =>
                       note.completed &&
-                      note.completedIn?.bookId === bookId &&
-                      note.completedIn?.chapterId === chapterId,
+                      note.completedIn?.bookId === book.slug &&
+                      note.completedIn?.chapterId === chapter.slug,
                   ) || []
 
                 return (
-                  <div key={usage.entityId} className="border rounded-md p-4 hover:bg-muted/10 transition-colors">
+                  <div className="border rounded-md p-4 hover:bg-muted/10 transition-colors" key={usage.entitySlug}>
                     <div className="flex justify-between items-center mb-2">
                       <Link
-                        href={`/project/${projectId}/entity/${usage.entityId}`}
                         className="font-medium hover:underline text-blue-600 dark:text-blue-400"
+                        href={goToEntity({ entity: { slug: usage.entitySlug }, project })}
                       >
                         {usage.entityName}
                       </Link>
@@ -98,7 +99,7 @@ export function ChapterStatisticsView({
                         <h4 className="text-sm font-medium mb-1">Bu bölümde tamamlanan notlar:</h4>
                         <ul className="text-sm space-y-1">
                           {completedNotes.map((note) => (
-                            <li key={note.id} className="text-muted-foreground flex items-center gap-1">
+                            <li className="text-muted-foreground flex items-center gap-1" key={note.id}>
                               <Check className="h-3 w-3 text-green-500" />
                               {note.title}
                             </li>

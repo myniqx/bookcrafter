@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
 
-import { useState, useEffect } from "react"
+import type { Entity, EntityProperty, EntityType } from "@/lib/types"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Entity, EntityProperty, EntityType } from "@/lib/types"
 import { generateId, slugify } from "@/lib/utils"
 
 interface CreateEntityFormProps {
@@ -16,7 +17,7 @@ interface CreateEntityFormProps {
   onCancel: () => void
 }
 
-export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: CreateEntityFormProps) {
+export function CreateEntityForm({ entityType, onCancel, onCreateEntity }: CreateEntityFormProps) {
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
@@ -49,9 +50,9 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         return [
           {
             id: generateId(),
+            isDefault: true,
             name: "fullname",
             value: name,
-            isDefault: true,
           },
           {
             id: generateId(),
@@ -63,9 +64,9 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         return [
           {
             id: generateId(),
+            isDefault: true,
             name: "name",
             value: name,
-            isDefault: true,
           },
           {
             id: generateId(),
@@ -77,9 +78,9 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         return [
           {
             id: generateId(),
+            isDefault: true,
             name: "name",
             value: name,
-            isDefault: true,
           },
           {
             id: generateId(),
@@ -91,9 +92,9 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         return [
           {
             id: generateId(),
+            isDefault: true,
             name: "name",
             value: name,
-            isDefault: true,
           },
           {
             id: generateId(),
@@ -124,15 +125,15 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
       const now = new Date().toISOString()
 
       const newEntity: Entity = {
+        createdAt: now,
+        description: description.trim() || undefined,
         id: generateId(),
         name: name.trim(),
+        notes: [],
+        properties: getDefaultProperties(),
         slug: slug.trim(),
         type: entityType,
-        description: description.trim() || undefined,
-        createdAt: now,
         updatedAt: now,
-        properties: getDefaultProperties(),
-        notes: [],
         usages: [],
       }
 
@@ -151,14 +152,13 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 border rounded-md p-4">
+    <form className="space-y-4 border rounded-md p-4" onSubmit={handleSubmit}>
       <h3 className="text-lg font-medium">Yeni {getEntityTypeTitle()} Oluştur</h3>
 
       <div className="grid gap-2">
         <Label htmlFor="name">{getEntityTypeTitle()} Adı</Label>
         <Input
           id="name"
-          value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={`Örn: ${
             entityType === "character"
@@ -169,6 +169,7 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
                   ? "Sihirli Kılıç"
                   : "Büyük Savaş"
           }`}
+          value={name}
         />
       </div>
 
@@ -177,11 +178,11 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         <div className="flex">
           <span className="flex items-center bg-muted px-3 rounded-l-md border border-r-0 border-input">@</span>
           <Input
+            className="rounded-l-none"
             id="slug"
-            value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="ornek-slug"
-            className="rounded-l-none"
+            value={slug}
           />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -193,20 +194,20 @@ export function CreateEntityForm({ entityType, onCreateEntity, onCancel }: Creat
         <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
         <Textarea
           id="description"
-          value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={`${getEntityTypeTitle()} hakkında kısa bir açıklama`}
           rows={3}
+          value={description}
         />
       </div>
 
       {error && <div className="text-sm font-medium text-destructive">{error}</div>}
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">
           İptal
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
         </Button>
       </div>

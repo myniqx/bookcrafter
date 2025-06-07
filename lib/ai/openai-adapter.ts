@@ -1,5 +1,6 @@
-import { BaseAIAdapter } from "./ai-adapter"
 import type { AIRequest, AIResponse, AISettings } from "../types"
+
+import { BaseAIAdapter } from "./ai-adapter"
 
 export class OpenAIAdapter extends BaseAIAdapter {
   provider = "openai"
@@ -9,31 +10,31 @@ export class OpenAIAdapter extends BaseAIAdapter {
 
     if (!settings.apiKey) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: "OpenAI API key is required",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
 
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${settings.apiKey}`,
-        },
         body: JSON.stringify({
-          model: settings.model || "gpt-3.5-turbo",
+          max_tokens: settings.maxTokens || 1000,
           messages: [
             {
-              role: "user",
               content: this.buildPrompt(request),
+              role: "user",
             },
           ],
+          model: settings.model || "gpt-3.5-turbo",
           temperature: settings.temperature || 0.7,
-          max_tokens: settings.maxTokens || 1000,
         }),
+        headers: {
+          Authorization: `Bearer ${settings.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
       })
 
       if (!response.ok) {
@@ -43,21 +44,21 @@ export class OpenAIAdapter extends BaseAIAdapter {
       const data = await response.json()
 
       return {
-        success: true,
         originalText: request.selectedText || "",
+        success: true,
         suggestedText: data.choices[0]?.message?.content || "",
         usage: {
-          promptTokens: data.usage?.prompt_tokens || 0,
           completionTokens: data.usage?.completion_tokens || 0,
+          promptTokens: data.usage?.prompt_tokens || 0,
           totalTokens: data.usage?.total_tokens || 0,
         },
       }
     } catch (error) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: error instanceof Error ? error.message : "Unknown error",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
   }

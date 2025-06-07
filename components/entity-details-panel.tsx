@@ -1,10 +1,12 @@
 "use client"
 
+import Link from "next/link"
+
+import type { Entity } from "@/lib/types"
+
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import type { Entity } from "@/lib/types"
-import Link from "next/link"
 
 interface EntityDetailsPanelProps {
   entity: Entity | null
@@ -94,13 +96,13 @@ export function EntityDetailsPanel({ entity, projectId }: EntityDetailsPanelProp
               <h3 className="text-sm font-medium mb-2">Notlar</h3>
               <div className="space-y-2">
                 {entity.notes.map((note) => (
-                  <div key={note.id} className="p-2 border rounded-md">
+                  <div className="p-2 border rounded-md" key={note.id}>
                     <p className="font-medium text-sm">{note.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">{note.content}</p>
                     {note.completed && (
                       <Badge
-                        variant="outline"
                         className="mt-2 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        variant="outline"
                       >
                         Tamamlandı
                       </Badge>
@@ -123,9 +125,9 @@ export function EntityDetailsPanel({ entity, projectId }: EntityDetailsPanelProp
               <div className="space-y-1">
                 {entity.usages.map((usage) => (
                   <Link
-                    key={`${usage.bookId}-${usage.chapterId}`}
-                    href={`/project/${projectId}/book/${usage.bookId}/chapter/${usage.chapterId}`}
                     className="text-xs block hover:underline text-blue-600 dark:text-blue-400"
+                    href={`/project/${projectId}/book/${usage.bookId}/chapter/${usage.chapterId}`}
+                    key={`${usage.bookId}-${usage.chapterId}`}
                   >
                     • {usage.count} kez kullanıldı
                   </Link>

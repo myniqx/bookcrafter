@@ -1,9 +1,10 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
-import { useProject } from "@/hooks/use-project"
+
+import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
+import { useProject } from "@/hooks/use-project"
 
 interface ExportButtonProps {
   projectId: string
@@ -11,7 +12,7 @@ interface ExportButtonProps {
   onSave: () => void
 }
 
-export function ExportButton({ projectId, hasUnsavedChanges, onSave }: ExportButtonProps) {
+export function ExportButton({ hasUnsavedChanges, onSave, projectId }: ExportButtonProps) {
   const { project } = useProject(projectId)
   const { toast } = useToast()
 
@@ -39,15 +40,15 @@ export function ExportButton({ projectId, hasUnsavedChanges, onSave }: ExportBut
       URL.revokeObjectURL(url)
 
       toast({
-        title: "Proje dışa aktarıldı",
         description: `${project.name} başarıyla JSON dosyası olarak dışa aktarıldı.`,
+        title: "Proje dışa aktarıldı",
         variant: "success",
       })
     } catch (error) {
       console.error("Proje dışa aktarılırken hata:", error)
       toast({
-        title: "Dışa aktarma hatası",
         description: "Proje dışa aktarılırken bir hata oluştu.",
+        title: "Dışa aktarma hatası",
         variant: "destructive",
       })
     }
@@ -55,11 +56,11 @@ export function ExportButton({ projectId, hasUnsavedChanges, onSave }: ExportBut
 
   return (
     <Button
-      variant="outline"
-      size="icon"
-      onClick={handleExport}
       className="rounded-full bg-background/80 backdrop-blur-xs border-muted"
+      onClick={handleExport}
+      size="icon"
       title="Projeyi Dışa Aktar"
+      variant="outline"
     >
       <Download className="h-[1.2rem] w-[1.2rem]" />
       <span className="sr-only">Projeyi Dışa Aktar</span>

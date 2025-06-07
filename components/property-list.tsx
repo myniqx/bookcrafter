@@ -1,11 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import type { EntityProperty } from "@/lib/types"
+
 import { Edit, Save, Star, StarOff } from "lucide-react"
+
+import type { EntityProperty } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { useProject } from "@/hooks/use-project"
 
 interface PropertyListProps {
@@ -14,7 +17,7 @@ interface PropertyListProps {
   projectId: string
 }
 
-export function PropertyList({ properties, entityId, projectId }: PropertyListProps) {
+export function PropertyList({ entityId, projectId, properties }: PropertyListProps) {
   const { project, saveProject } = useProject(projectId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
@@ -108,10 +111,10 @@ export function PropertyList({ properties, entityId, projectId }: PropertyListPr
             <CardTitle className="text-base flex items-center justify-between">
               <span>{property.name}</span>
               <Button
-                variant="ghost"
-                size="icon"
                 onClick={() => handleToggleDefault(property)}
+                size="icon"
                 title={property.isDefault ? "Varsayılan Özellik" : "Varsayılan Yap"}
+                variant="ghost"
               >
                 {property.isDefault ? <Star className="h-4 w-4 text-yellow-500" /> : <StarOff className="h-4 w-4" />}
               </Button>
@@ -120,8 +123,8 @@ export function PropertyList({ properties, entityId, projectId }: PropertyListPr
           <CardContent>
             {editingId === property.id ? (
               <div className="flex gap-2">
-                <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-1" />
-                <Button size="icon" onClick={() => handleSave(property)}>
+                <Input className="flex-1" onChange={(e) => setEditValue(e.target.value)} value={editValue} />
+                <Button onClick={() => handleSave(property)} size="icon">
                   <Save className="h-4 w-4" />
                 </Button>
               </div>
@@ -130,7 +133,7 @@ export function PropertyList({ properties, entityId, projectId }: PropertyListPr
                 <div className="text-sm">
                   {property.value || <span className="text-muted-foreground italic">Boş</span>}
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleEdit(property)}>
+                <Button onClick={() => handleEdit(property)} size="icon" variant="ghost">
                   <Edit className="h-4 w-4" />
                 </Button>
               </div>

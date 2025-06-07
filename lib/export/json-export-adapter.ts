@@ -1,5 +1,6 @@
+import type { ExportOptions, ExportResult, Project } from "../types"
+
 import { BaseExportAdapter } from "./export-adapter"
-import type { Project, ExportOptions, ExportResult } from "../types"
 
 export class JSONExportAdapter extends BaseExportAdapter {
   type = "json"
@@ -16,15 +17,15 @@ export class JSONExportAdapter extends BaseExportAdapter {
       const blob = new Blob([jsonString], { type: "application/json" })
 
       return {
-        success: true,
         data: blob,
         filename: this.generateFilename(project, "json"),
+        success: true,
       }
     } catch (error) {
       console.error("JSON export error:", error)
       return {
-        success: false,
         error: "JSON oluşturulurken hata oluştu",
+        success: false,
       }
     }
   }

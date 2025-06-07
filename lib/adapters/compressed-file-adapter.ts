@@ -1,6 +1,7 @@
+import JSZip from "jszip"
+
 import type { Project, ProjectBase } from "../types"
 import type { StorageAdapter } from "./adapter"
-import JSZip from "jszip"
 
 export class CompressedFileAdapter implements StorageAdapter {
   type = "compressedFile"
@@ -153,8 +154,8 @@ export class CompressedFileAdapter implements StorageAdapter {
 
   async getProjects(): Promise<ProjectBase[]> {
     return Array.from(this.projectsCache.values()).map((project) => ({
-      slug: project.slug,
       name: project.name,
+      slug: project.slug,
       updatedAt: project.updatedAt,
     }))
   }

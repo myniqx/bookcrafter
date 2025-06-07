@@ -1,13 +1,14 @@
 "use client"
 
+import { Globe } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Globe } from "lucide-react"
-import { useLanguage, type Language } from "@/contexts/language-context"
+import { type Language, useLanguage } from "@/contexts/language-context"
 
 const languages: { code: Language; name: string; flag: string }[] = [
-  { code: "tr", name: "Türkçe", flag: "🇹🇷" },
-  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "tr", flag: "🇹🇷", name: "Türkçe" },
+  { code: "en", flag: "🇺🇸", name: "English" },
 ]
 
 export function LanguageSwitcher() {
@@ -18,7 +19,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button className="gap-2" size="sm" variant="outline">
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">{currentLanguage?.flag}</span>
           <span className="hidden md:inline">{currentLanguage?.name}</span>
@@ -27,9 +28,9 @@ export function LanguageSwitcher() {
       <DropdownMenuContent align="end">
         {languages.map((lang) => (
           <DropdownMenuItem
+            className={language === lang.code ? "bg-accent" : ""}
             key={lang.code}
             onClick={() => setLanguage(lang.code)}
-            className={language === lang.code ? "bg-accent" : ""}
           >
             <span className="mr-2">{lang.flag}</span>
             {lang.name}

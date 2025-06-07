@@ -1,8 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import type { Note } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,11 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Note } from "@/lib/types"
 import { generateId } from "@/lib/utils"
 
 interface AddNoteDialogProps {
@@ -24,7 +25,7 @@ interface AddNoteDialogProps {
   onAddNote: (note: Note) => void
 }
 
-export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogProps) {
+export function AddNoteDialog({ onAddNote, onOpenChange, open }: AddNoteDialogProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,10 +49,10 @@ export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogPr
 
     try {
       const newNote: Note = {
-        id: generateId(),
-        title: title.trim(),
         content: content.trim(),
         createdAt: new Date().toISOString(),
+        id: generateId(),
+        title: title.trim(),
       }
 
       onAddNote(newNote)
@@ -68,7 +69,7 @@ export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogPr
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -84,9 +85,9 @@ export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogPr
               <Label htmlFor="title">Not Başlığı</Label>
               <Input
                 id="title"
-                value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Örn: Karakter Motivasyonu"
+                value={title}
               />
             </div>
 
@@ -94,10 +95,10 @@ export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogPr
               <Label htmlFor="content">Not İçeriği</Label>
               <Textarea
                 id="content"
-                value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Notunuzun içeriği..."
                 rows={5}
+                value={content}
               />
             </div>
 
@@ -105,10 +106,10 @@ export function AddNoteDialog({ open, onOpenChange, onAddNote }: AddNoteDialogPr
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button disabled={isSubmitting} onClick={() => onOpenChange(false)} type="button" variant="outline">
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Ekleniyor..." : "Ekle"}
             </Button>
           </DialogFooter>

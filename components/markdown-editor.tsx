@@ -1,10 +1,12 @@
 "use client"
 
 import type React from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-import { useState, useEffect, useRef, useCallback } from "react"
 import type { Entity, Project } from "@/lib/types"
+
 import { Textarea } from "@/components/ui/textarea"
+
 import { AIPromptDropdown } from "./ai-prompt-dropdown"
 
 interface MarkdownEditorProps {
@@ -18,15 +20,15 @@ interface MarkdownEditorProps {
 
 export function MarkdownEditor({
   content,
-  entities,
-  project,
   currentChapter,
+  entities,
   onChange,
   onProcessedContentChange,
+  project,
 }: MarkdownEditorProps) {
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)
   const [entitySuggestions, setEntitySuggestions] = useState<Entity[]>([])
-  const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ left: 0, top: 0 })
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [selectedText, setSelectedText] = useState("")
@@ -97,7 +99,7 @@ export function MarkdownEditor({
 
       document.body.removeChild(mirror)
 
-      return { top, left }
+      return { left, top }
     },
     [content],
   )
@@ -256,40 +258,40 @@ export function MarkdownEditor({
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm text-muted-foreground">Markdown Editor</div>
         <AIPromptDropdown
-          selectedText={selectedText}
-          onTextReplace={handleTextReplace}
-          project={project}
           currentChapter={currentChapter}
           currentContent={content}
+          onTextReplace={handleTextReplace}
+          project={project}
+          selectedText={selectedText}
         />
       </div>
 
       <Textarea
-        ref={textareaRef}
-        value={content}
+        className="w-full h-[calc(100vh-300px)] min-h-[400px] p-2 font-mono text-sm bg-transparent resize-none focus:outline-hidden"
         onChange={handleTextareaInput}
         onKeyDown={handleKeyDown}
-        onSelect={handleTextSelection}
         onMouseUp={handleTextSelection}
-        className="w-full h-[calc(100vh-300px)] min-h-[400px] p-2 font-mono text-sm bg-transparent resize-none focus:outline-hidden"
+        onSelect={handleTextSelection}
         placeholder="Metninizi buraya yazın. @tanimlayici veya @tanimlayici.ozellik formatında öğe referansları kullanabilirsiniz. Markdown formatlaması desteklenir."
+        ref={textareaRef}
+        value={content}
       />
 
       {showEntitySuggestions && (
         <div
-          ref={suggestionsRef}
           className="absolute z-10 bg-background border rounded-md shadow-md max-h-60 overflow-y-auto w-64"
+          ref={suggestionsRef}
           style={{
-            top: `${cursorPosition.top}px`,
             left: `${cursorPosition.left}px`,
+            top: `${cursorPosition.top}px`,
           }}
         >
           {entitySuggestions.map((entity, index) => (
             <div
-              key={entity.id}
               className={`p-2 cursor-pointer flex items-center gap-2 ${
                 index === selectedIndex ? "bg-primary/10" : "hover:bg-muted"
               }`}
+              key={entity.slug}
               onClick={() => handleEntitySelect(entity)}
             >
               <div className="w-2 h-2 rounded-full bg-primary"></div>

@@ -1,15 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import { BookOpen, Plus, Upload } from "lucide-react"
+
 import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { LoadProjectDialog } from "@/components/load-project-dialog"
 import { ProjectList } from "@/components/project-list"
 import { SavedProjectsList } from "@/components/saved-projects-list"
-import { LanguageSwitcher } from "@/components/language-switcher"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useLanguage } from "@/contexts/language-context"
 
 export default function Home() {
@@ -42,14 +44,14 @@ export default function Home() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
+              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
               onClick={() => setCreateDialogOpen(true)}
               size="lg"
-              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
               <Plus className="mr-2 h-5 w-5" />
               {t("new_project")}
             </Button>
-            <Button onClick={() => setLoadDialogOpen(true)} variant="outline" size="lg">
+            <Button onClick={() => setLoadDialogOpen(true)} size="lg" variant="outline">
               <Upload className="mr-2 h-5 w-5" />
               {t("load_project")}
             </Button>
@@ -62,15 +64,15 @@ export default function Home() {
               <CardDescription>{t("get_started")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="saved" className="w-full">
+              <Tabs className="w-full" defaultValue="saved">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="saved">{t("your_projects")}</TabsTrigger>
                   <TabsTrigger value="autosaved">{t("autosaved_projects")}</TabsTrigger>
                 </TabsList>
-                <TabsContent value="saved" className="mt-6">
+                <TabsContent className="mt-6" value="saved">
                   <ProjectList />
                 </TabsContent>
-                <TabsContent value="autosaved" className="mt-6">
+                <TabsContent className="mt-6" value="autosaved">
                   <SavedProjectsList />
                 </TabsContent>
               </Tabs>
@@ -80,8 +82,8 @@ export default function Home() {
       </div>
 
       {/* Dialogs */}
-      <CreateProjectDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
-      <LoadProjectDialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen} />
+      <CreateProjectDialog onOpenChange={setCreateDialogOpen} open={createDialogOpen} />
+      <LoadProjectDialog onOpenChange={setLoadDialogOpen} open={loadDialogOpen} />
     </div>
   )
 }

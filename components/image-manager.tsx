@@ -1,11 +1,15 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import { Eye, ImageIcon, Upload, X } from "lucide-react"
+
+import type { ProjectImage } from "@/lib/types"
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -14,13 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Upload, ImageIcon, X, Eye } from "lucide-react"
-import type { ProjectImage } from "@/lib/types"
-import { generateId } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { generateId } from "@/lib/utils"
 
 interface ImageManagerProps {
   images: ProjectImage[]
@@ -33,13 +35,13 @@ interface ImageManagerProps {
 }
 
 export function ImageManager({
+  backgroundImageId,
+  coverImageId,
   images,
   onAddImage,
   onRemoveImage,
-  onSetCoverImage,
   onSetBackgroundImage,
-  coverImageId,
-  backgroundImageId,
+  onSetCoverImage,
 }: ImageManagerProps) {
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -54,8 +56,8 @@ export function ImageManager({
 
     if (!file.type.startsWith("image/")) {
       toast({
-        title: "Geçersiz dosya",
         description: "Lütfen bir resim dosyası seçin.",
+        title: "Geçersiz dosya",
         variant: "destructive",
       })
       return
@@ -63,8 +65,8 @@ export function ImageManager({
 
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "Dosya çok büyük",
         description: "Resim dosyası 5MB'dan küçük olmalıdır.",
+        title: "Dosya çok büyük",
         variant: "destructive",
       })
       return
@@ -83,20 +85,20 @@ export function ImageManager({
         const data = e.target?.result as string
 
         const newImage: ProjectImage = {
-          id: generateId(),
-          name: imageName.trim(),
-          type: imageType,
-          data,
-          mimeType: selectedFile.type,
-          size: selectedFile.size,
           createdAt: new Date().toISOString(),
+          data,
+          id: generateId(),
+          mimeType: selectedFile.type,
+          name: imageName.trim(),
+          size: selectedFile.size,
+          type: imageType,
         }
 
         onAddImage(newImage)
 
         toast({
-          title: "Resim eklendi",
           description: `${newImage.name} başarıyla eklendi.`,
+          title: "Resim eklendi",
           variant: "success",
         })
 
@@ -110,8 +112,8 @@ export function ImageManager({
     } catch (error) {
       console.error("Resim yüklenirken hata:", error)
       toast({
-        title: "Yükleme hatası",
         description: "Resim yüklenirken bir hata oluştu.",
+        title: "Yükleme hatası",
         variant: "destructive",
       })
     }
@@ -152,19 +154,19 @@ export function ImageManager({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {images.map((image) => (
-          <Card key={image.id} className="relative">
+          <Card className="relative" key={image.id}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm truncate">{image.name}</CardTitle>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPreviewImage(image)}>
+                  <Button className="h-6 w-6" onClick={() => setPreviewImage(image)} size="icon" variant="ghost">
                     <Eye className="h-3 w-3" />
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="icon"
                     className="h-6 w-6 text-destructive"
                     onClick={() => onRemoveImage(image.id)}
+                    size="icon"
+                    variant="ghost"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -173,7 +175,7 @@ export function ImageManager({
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                <img src={image.data || "/placeholder.svg"} alt={image.name} className="w-full h-full object-cover" />
+                <img alt={image.name} className="w-full h-full object-cover" src={image.data || "/placeholder.svg"} />
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <Badge variant="secondary">{getImageTypeLabel(image.type)}</Badge>
@@ -181,20 +183,20 @@ export function ImageManager({
               </div>
               {image.type === "cover" && onSetCoverImage && (
                 <Button
-                  variant={coverImageId === image.id ? "default" : "outline-solid"}
-                  size="sm"
                   className="w-full"
                   onClick={() => onSetCoverImage(image.id)}
+                  size="sm"
+                  variant={coverImageId === image.id ? "default" : "outline-solid"}
                 >
                   {coverImageId === image.id ? "Kapak Resmi" : "Kapak Yap"}
                 </Button>
               )}
               {image.type === "background" && onSetBackgroundImage && (
                 <Button
-                  variant={backgroundImageId === image.id ? "default" : "outline-solid"}
-                  size="sm"
                   className="w-full"
                   onClick={() => onSetBackgroundImage(image.id)}
+                  size="sm"
+                  variant={backgroundImageId === image.id ? "default" : "outline-solid"}
                 >
                   {backgroundImageId === image.id ? "Arka Plan" : "Arka Plan Yap"}
                 </Button>
@@ -213,7 +215,7 @@ export function ImageManager({
       )}
 
       {/* Upload Dialog */}
-      <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+      <Dialog onOpenChange={setIsUploadOpen} open={isUploadOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Resim Ekle</DialogTitle>
@@ -225,7 +227,7 @@ export function ImageManager({
           <div className="space-y-4">
             <div>
               <Label htmlFor="file">Resim Dosyası</Label>
-              <Input id="file" type="file" accept="image/*" onChange={handleFileSelect} className="mt-1" />
+              <Input accept="image/*" className="mt-1" id="file" onChange={handleFileSelect} type="file" />
             </div>
 
             {selectedFile && (
@@ -233,17 +235,17 @@ export function ImageManager({
                 <div>
                   <Label htmlFor="name">Resim Adı</Label>
                   <Input
+                    className="mt-1"
                     id="name"
-                    value={imageName}
                     onChange={(e) => setImageName(e.target.value)}
                     placeholder="Resim adını girin"
-                    className="mt-1"
+                    value={imageName}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="type">Resim Türü</Label>
-                  <Select value={imageType} onValueChange={(value) => setImageType(value as ProjectImage["type"])}>
+                  <Select onValueChange={(value) => setImageType(value as ProjectImage["type"])} value={imageType}>
                     <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
@@ -265,10 +267,10 @@ export function ImageManager({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUploadOpen(false)}>
+            <Button onClick={() => setIsUploadOpen(false)} variant="outline">
               İptal
             </Button>
-            <Button onClick={handleUpload} disabled={!selectedFile || !imageName.trim()}>
+            <Button disabled={!selectedFile || !imageName.trim()} onClick={handleUpload}>
               Ekle
             </Button>
           </DialogFooter>
@@ -276,7 +278,7 @@ export function ImageManager({
       </Dialog>
 
       {/* Preview Dialog */}
-      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+      <Dialog onOpenChange={() => setPreviewImage(null)} open={!!previewImage}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>{previewImage?.name}</DialogTitle>
@@ -287,7 +289,7 @@ export function ImageManager({
           </DialogHeader>
           {previewImage && (
             <div className="max-h-[70vh] overflow-auto">
-              <img src={previewImage.data || "/placeholder.svg"} alt={previewImage.name} className="w-full h-auto" />
+              <img alt={previewImage.name} className="w-full h-auto" src={previewImage.data || "/placeholder.svg"} />
             </div>
           )}
         </DialogContent>

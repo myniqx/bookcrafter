@@ -1,13 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { formatDate } from "@/lib/utils"
+
+import { FileText, Loader2, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Trash2, FileText, Loader2 } from "lucide-react"
+
 import type { Project } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
+import { formatDate } from "@/lib/utils"
 
 export function SavedProjectsList() {
   const [savedProjects, setSavedProjects] = useState<Project[]>([])
@@ -102,7 +105,7 @@ export function SavedProjectsList() {
         const originalName = (project.name || t("untitled_project")).replace("-autosave", "")
 
         return (
-          <Card key={project.slug} className="hover:bg-muted/20 transition-colors">
+          <Card className="hover:bg-muted/20 transition-colors" key={project.slug}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>
@@ -128,11 +131,11 @@ export function SavedProjectsList() {
                 {t("last_updated")}: {project.updatedAt ? formatDate(project.updatedAt) : t("unknown")}
               </div>
               <div className="flex gap-2">
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteProject(project.slug)}>
+                <Button onClick={() => handleDeleteProject(project.slug)} size="sm" variant="destructive">
                   <Trash2 className="h-4 w-4 mr-1" />
                   {t("delete")}
                 </Button>
-                <Button variant="default" size="sm" onClick={() => handleLoadProject(project.slug)}>
+                <Button onClick={() => handleLoadProject(project.slug)} size="sm" variant="default">
                   {t("load")}
                 </Button>
               </div>

@@ -1,16 +1,18 @@
 "use client"
 
-import { useState } from "react"
+
+import { BookOpen } from "lucide-react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+
+
 import { Badge } from "@/components/ui/badge"
-import { Plus, BookOpen } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useLanguage } from "@/contexts/language-context"
+import { goToBook } from "@/lib/utils/navigateTo"
+import { useProject } from "@/providers/project-provider"
+
 import { CreateBookDialog } from "./create-book-dialog"
 import { EditableText } from "./editable-text"
-import type { Book, Project } from "@/lib/types"
-import { useLanguage } from "@/contexts/language-context"
-import { useProject } from "@/providers/project-provider"
 
 
 export function BooksList() {
@@ -40,21 +42,21 @@ export function BooksList() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {books.map((book) => (
-          <Link href={`/${project.slug}/book/${book.slug}`} key={book.slug}>
+          <Link href={goToBook({ book, project })} key={book.slug}>
             <Card className="h-full cursor-pointer hover:bg-muted/20 transition-colors">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <EditableText
-                    value={book.title || t("untitled_book")}
-                    onChange={(value) => updateBook(book.slug, { title: value })}
                     className="flex-1"
+                    onChange={(value) => updateBook(book.slug, { title: value })}
+                    value={book.title || t("untitled_book")}
                   />
                 </CardTitle>
                 <CardDescription>
                   <EditableText
-                    value={book.description || t("no_description")}
                     onChange={(value) => updateBook(book.slug, { description: value })}
                     placeholder={t("add_description")}
+                    value={book.description || t("no_description")}
                   />
                 </CardDescription>
               </CardHeader>

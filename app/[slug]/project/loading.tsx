@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
@@ -26,7 +26,7 @@ export default function Loading() {
       {/* Content skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="overflow-hidden">
+          <Card className="overflow-hidden" key={i}>
             <CardHeader className="p-4">
               <Skeleton className="h-6 w-48" />
             </CardHeader>

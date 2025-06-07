@@ -1,18 +1,20 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import { useRouter } from "next/navigation"
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
+import { goToProject } from "@/lib/utils/navigateTo"
 
 interface LoadProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function LoadProjectDialog({ open, onOpenChange }: LoadProjectDialogProps) {
+export function LoadProjectDialog({ onOpenChange, open }: LoadProjectDialogProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +55,7 @@ export function LoadProjectDialog({ open, onOpenChange }: LoadProjectDialogProps
       localStorage.setItem(projectsListKey, JSON.stringify(projectsList))
 
       onOpenChange(false)
-      router.push(`/project/${project.id}`)
+      goToProject({ projectSlug: project.slug, router })
     } catch (err) {
       console.error("Proje yüklenirken hata oluştu:", err)
       setError("Geçersiz proje dosyası. Lütfen doğru JSON formatında bir dosya seçin.")
@@ -63,7 +65,7 @@ export function LoadProjectDialog({ open, onOpenChange }: LoadProjectDialogProps
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Proje Yükle</DialogTitle>
@@ -73,7 +75,7 @@ export function LoadProjectDialog({ open, onOpenChange }: LoadProjectDialogProps
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="project-file">Proje Dosyası</Label>
-            <Input id="project-file" type="file" accept=".json" onChange={handleFileUpload} disabled={isLoading} />
+            <Input accept=".json" disabled={isLoading} id="project-file" onChange={handleFileUpload} type="file" />
             <p className="text-xs text-muted-foreground mt-1">
               Yalnızca bu uygulama tarafından oluşturulan JSON dosyaları desteklenir.
             </p>
@@ -97,16 +99,16 @@ function readFileAsText(file: File): Promise<string> {
 }
 
 // Input component for file upload
-function Input({ id, type, accept, onChange, disabled }: any) {
+function Input({ accept, disabled, id, onChange, type }: any) {
   return (
     <div className="relative">
       <input
-        id={id}
-        type={type}
         accept={accept}
-        onChange={onChange}
-        disabled={disabled}
         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+        disabled={disabled}
+        id={id}
+        onChange={onChange}
+        type={type}
       />
     </div>
   )

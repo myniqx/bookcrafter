@@ -1,8 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import { DialogClose, DialogTrigger } from "@radix-ui/react-dialog"
+import { Plus } from "lucide-react"
+
+import type { Chapter } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,35 +17,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { Chapter } from "@/lib/types"
-import { generateId } from "@/lib/utils"
+import { useLanguage } from "@/contexts/language-context"
+import { generateId, slugify } from "@/lib/utils"
+import { useBook } from "@/providers/book-provider"
 
-interface CreateChapterDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onCreateChapter: (chapter: Chapter) => void
-  existingChapters?: Chapter[]
-}
 
-export function CreateChapterDialog({
-  open,
-  onOpenChange,
-  onCreateChapter,
-  existingChapters = [],
-}: CreateChapterDialogProps) {
+export function CreateChapterDialog() {
+  const { t } = useLanguage()
   const [title, setTitle] = useState("")
+  const [open, onOpenChange] = useState(false)
   const [number, setNumber] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { addChapter, book, chapters } = useBook()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title.trim()) {
+    const trimmedTitle = title.trim()
+
+    if (!trimmedTitle) {
       setError("Bölüm başlığı gereklidir.")
+      return
+    }
+
+    const slug = slugify(trimmedTitle)
+
+    if (chapters?.some((chapter) => chapter.slug === slug)) {
+      setError("Bu bölüm zaten mevcut.")
       return
     }
 
@@ -52,9 +59,9 @@ export function CreateChapterDialog({
       // Eğer numara belirtilmemişse, mevcut en küçük numarayı bul
       let chapterNumber: number | undefined = number ? Number.parseInt(number) : undefined
 
-      if (chapterNumber === undefined && existingChapters) {
+      if (chapterNumber === undefined && chapters) {
         // Mevcut bölüm numaralarını al
-        const existingNumbers = existingChapters
+        const existingNumbers = chapters
           .map((ch) => ch.number)
           .filter((num): num is number => num !== undefined)
           .sort((a, b) => a - b)
@@ -72,15 +79,15 @@ export function CreateChapterDialog({
       }
 
       const newChapter: Chapter = {
-        id: generateId(),
-        title: title.trim(),
-        number: chapterNumber,
         content: "",
         createdAt: now,
+        number: chapterNumber,
+        slug,
+        title: title.trim(),
         updatedAt: now,
       }
 
-      onCreateChapter(newChapter)
+      addChapter(newChapter)
 
       // Reset form
       setTitle("")
@@ -94,7 +101,13 @@ export function CreateChapterDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          {chapters ? t("add_new_chapter") : t("create_first_chapter")}
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -109,9 +122,9 @@ export function CreateChapterDialog({
               <Label htmlFor="title">Bölüm Başlığı</Label>
               <Input
                 id="title"
-                value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Örn: Yeni Başlangıçlar"
+                value={title}
               />
             </div>
 
@@ -119,11 +132,11 @@ export function CreateChapterDialog({
               <Label htmlFor="number">Bölüm Numarası (Opsiyonel)</Label>
               <Input
                 id="number"
-                type="number"
-                value={number}
+                min="1"
                 onChange={(e) => setNumber(e.target.value)}
                 placeholder="Örn: 1"
-                min="1"
+                type="number"
+                value={number}
               />
             </div>
 
@@ -131,10 +144,12 @@ export function CreateChapterDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <DialogClose>
+              <Button disabled={isSubmitting} type="button" variant="outline">
+                İptal
+              </Button>
+            </DialogClose>
+            <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
             </Button>
           </DialogFooter>

@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useRef, useState } from "react"
 
-import { useState, useRef, useEffect } from "react"
 import { Pencil } from "lucide-react"
+
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -18,12 +19,12 @@ interface EditableTextProps {
 }
 
 export function EditableText({
-  value,
-  onChange,
-  placeholder = "Metin ekleyin...",
   className,
   isTitle = false,
   multiline = false,
+  onChange,
+  placeholder = "Metin ekleyin...",
+  value,
 }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [text, setText] = useState(value)
@@ -69,28 +70,28 @@ export function EditableText({
     if (multiline) {
       return (
         <Textarea
-          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          className={cn("min-h-[100px]", className)}
           onBlur={handleBlur}
+          onChange={(e) => setText(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={cn("min-h-[100px]", className)}
-          onClick={(e) => e.stopPropagation()}
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          value={text}
         />
       )
     }
 
     return (
       <Input
-        ref={inputRef as React.RefObject<HTMLInputElement>}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        className={cn(isTitle ? "text-3xl font-bold" : "", className)}
         onBlur={handleBlur}
+        onChange={(e) => setText(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={cn(isTitle ? "text-3xl font-bold" : "", className)}
-        onClick={(e) => e.stopPropagation()}
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        value={text}
       />
     )
   }

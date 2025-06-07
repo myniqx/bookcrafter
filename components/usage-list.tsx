@@ -1,4 +1,7 @@
+import React from "react"
+
 import Link from "next/link"
+
 import { Card, CardContent } from "@/components/ui/card"
 
 interface Usage {
@@ -14,14 +17,14 @@ interface UsageListProps {
   projectId: string
 }
 
-export function UsageList({ usages, projectId }: UsageListProps) {
+export function UsageList({ projectId, usages }: UsageListProps) {
   if (usages.length === 0) {
     return <div className="text-center p-4 text-muted-foreground">Bu öğe henüz hiçbir bölümde kullanılmamış.</div>
   }
 
   return (
     <div className="space-y-2">
-      {usages.map((usage, index) => (
+      {usages.map((usage) => (
         <Link
           href={`/project/${projectId}/book/${usage.bookId}/chapter/${usage.chapterId}`}
           key={`${usage.bookId}-${usage.chapterId}`}

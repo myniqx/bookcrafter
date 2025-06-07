@@ -1,16 +1,18 @@
 "use client"
 
 import { useEffect } from "react"
+
+import { Loader2 } from "lucide-react"
 import Link from "next/link"
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatDate } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { useProjects } from "@/hooks/use-projects"
-import { Loader2 } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 
 export function ProjectList() {
   const { t } = useLanguage()
-  const { projects, loading, loadProjects } = useProjects()
+  const { loading, loadProjects, projects } = useProjects()
 
   useEffect(() => {
     loadProjects()

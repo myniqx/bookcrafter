@@ -1,8 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+
+import type { EntityProperty } from "@/lib/types"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,10 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { EntityProperty } from "@/lib/types"
 import { generateId } from "@/lib/utils"
 
 interface AddPropertyDialogProps {
@@ -24,7 +25,7 @@ interface AddPropertyDialogProps {
   existingProperties: EntityProperty[]
 }
 
-export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingProperties }: AddPropertyDialogProps) {
+export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenChange, open }: AddPropertyDialogProps) {
   const [name, setName] = useState("")
   const [value, setValue] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,9 +51,9 @@ export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingP
     try {
       const newProperty: EntityProperty = {
         id: generateId(),
+        isDefault: existingProperties.length === 0, // First property is default
         name: name.trim(),
         value: value.trim(),
-        isDefault: existingProperties.length === 0, // First property is default
       }
 
       onAddProperty(newProperty)
@@ -69,7 +70,7 @@ export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingP
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -84,9 +85,9 @@ export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingP
               <Label htmlFor="name">Özellik Adı</Label>
               <Input
                 id="name"
-                value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Örn: age, height, color"
+                value={name}
               />
               <p className="text-xs text-muted-foreground">
                 Özellik adı yalnızca harf, rakam ve alt çizgi içerebilir. Boşluk kullanmayın.
@@ -97,9 +98,9 @@ export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingP
               <Label htmlFor="value">Değer</Label>
               <Input
                 id="value"
-                value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Özelliğin değeri"
+                value={value}
               />
             </div>
 
@@ -107,10 +108,10 @@ export function AddPropertyDialog({ open, onOpenChange, onAddProperty, existingP
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button disabled={isSubmitting} onClick={() => onOpenChange(false)} type="button" variant="outline">
               İptal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Ekleniyor..." : "Ekle"}
             </Button>
           </DialogFooter>

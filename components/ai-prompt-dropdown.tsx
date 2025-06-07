@@ -1,15 +1,12 @@
 "use client"
 
 import { useState } from "react"
+
+import { Settings, Sparkles } from "lucide-react"
+
+import type { AIPromptTemplate, AISettings, Project } from "@/lib/types"
+
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -18,13 +15,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Sparkles, Settings } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import type { AIPromptTemplate, AISettings, Project } from "@/lib/types"
 import { aiManager } from "@/lib/ai/ai-manager"
 import { generateTextDiff } from "@/lib/utils/text-diff"
+
 import { AISettingsDialog } from "./ai-settings-dialog"
 import { AITextDiffModal } from "./ai-text-diff-modal"
 
@@ -37,11 +41,11 @@ interface AIPromptDropdownProps {
 }
 
 export function AIPromptDropdown({
-  selectedText,
-  onTextReplace,
-  project,
   currentChapter,
   currentContent,
+  onTextReplace,
+  project,
+  selectedText,
 }: AIPromptDropdownProps) {
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
   const [customPrompt, setCustomPrompt] = useState("")
@@ -60,10 +64,10 @@ export function AIPromptDropdown({
   const getAISettings = (): AISettings => {
     return (
       project.aiSettings || {
-        provider: "openai",
-        model: "gpt-3.5-turbo",
-        temperature: 0.7,
         maxTokens: 1000,
+        model: "gpt-3.5-turbo",
+        provider: "openai",
+        temperature: 0.7,
       }
     )
   }
@@ -74,19 +78,19 @@ export function AIPromptDropdown({
     const locations = project.entities.filter((e) => e.type === "location").map((e) => e.name)
 
     return {
-      projectName: project.name,
-      currentChapter,
       characters,
-      locations,
+      currentChapter,
       currentContent,
+      locations,
+      projectName: project.name,
     }
   }
 
   const executePrompt = async (prompt: string) => {
     if (!selectedText.trim()) {
       toast({
-        title: "No text selected",
         description: "Please select some text to apply AI suggestions.",
+        title: "No text selected",
         variant: "destructive",
       })
       return
@@ -95,16 +99,16 @@ export function AIPromptDropdown({
     setLoading(true)
     try {
       const response = await aiManager.generateText({
+        context: buildContext(),
         prompt,
         selectedText,
-        context: buildContext(),
         settings: getAISettings(),
       })
 
       if (!response.success) {
         toast({
-          title: "AI Error",
           description: response.error || "Failed to generate AI response",
+          title: "AI Error",
           variant: "destructive",
         })
         return
@@ -112,15 +116,15 @@ export function AIPromptDropdown({
 
       const diffs = generateTextDiff(selectedText, response.suggestedText)
       setAiResponse({
+        diffs,
         originalText: response.originalText,
         suggestedText: response.suggestedText,
-        diffs,
       })
       setDiffModalOpen(true)
     } catch (error) {
       toast({
-        title: "Error",
         description: "An unexpected error occurred",
+        title: "Error",
         variant: "destructive",
       })
     } finally {
@@ -140,8 +144,8 @@ export function AIPromptDropdown({
     // This would typically update the project's AI settings
     // For now, we'll just show a success message
     toast({
-      title: "Settings saved",
       description: "AI settings have been updated.",
+      title: "Settings saved",
     })
   }
 
@@ -160,7 +164,7 @@ export function AIPromptDropdown({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" disabled={!selectedText.trim() || loading} className="gap-2">
+          <Button className="gap-2" disabled={!selectedText.trim() || loading} size="sm" variant="outline">
             <Sparkles className="h-4 w-4" />
             {loading ? "Processing..." : "AI Assistant"}
           </Button>
@@ -174,9 +178,9 @@ export function AIPromptDropdown({
               <DropdownMenuLabel className="text-xs text-muted-foreground capitalize">{category}</DropdownMenuLabel>
               {prompts.map((prompt) => (
                 <DropdownMenuItem
+                  className="cursor-pointer"
                   key={prompt.id}
                   onClick={() => executePrompt(prompt.prompt)}
-                  className="cursor-pointer"
                 >
                   {prompt.name}
                 </DropdownMenuItem>
@@ -185,10 +189,10 @@ export function AIPromptDropdown({
           ))}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCustomPromptOpen(true)} className="cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer" onClick={() => setCustomPromptOpen(true)}>
             Custom Prompt...
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer" onClick={() => setSettingsOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
             AI Settings
           </DropdownMenuItem>
@@ -196,7 +200,7 @@ export function AIPromptDropdown({
       </DropdownMenu>
 
       {/* Custom Prompt Dialog */}
-      <Dialog open={customPromptOpen} onOpenChange={setCustomPromptOpen}>
+      <Dialog onOpenChange={setCustomPromptOpen} open={customPromptOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Custom AI Prompt</DialogTitle>
@@ -207,18 +211,18 @@ export function AIPromptDropdown({
               <Label htmlFor="prompt">Prompt</Label>
               <Textarea
                 id="prompt"
-                value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 placeholder="Enter your custom prompt here..."
                 rows={4}
+                value={customPrompt}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomPromptOpen(false)}>
+            <Button onClick={() => setCustomPromptOpen(false)} variant="outline">
               Cancel
             </Button>
-            <Button onClick={handleCustomPromptSubmit} disabled={!customPrompt.trim()}>
+            <Button disabled={!customPrompt.trim()} onClick={handleCustomPromptSubmit}>
               Apply Prompt
             </Button>
           </DialogFooter>
@@ -227,21 +231,21 @@ export function AIPromptDropdown({
 
       {/* AI Settings Dialog */}
       <AISettingsDialog
-        open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        settings={getAISettings()}
         onSave={handleSettingsSave}
+        open={settingsOpen}
+        settings={getAISettings()}
       />
 
       {/* Text Diff Modal */}
       {aiResponse && (
         <AITextDiffModal
-          open={diffModalOpen}
-          onOpenChange={setDiffModalOpen}
-          originalText={aiResponse.originalText}
-          suggestedText={aiResponse.suggestedText}
           diffs={aiResponse.diffs}
           onApply={onTextReplace}
+          onOpenChange={setDiffModalOpen}
+          open={diffModalOpen}
+          originalText={aiResponse.originalText}
+          suggestedText={aiResponse.suggestedText}
         />
       )}
     </>

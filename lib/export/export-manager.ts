@@ -1,7 +1,8 @@
-import type { Project, ExportOptions, ExportResult, ExportFormat } from "../types"
+import type { ExportFormat, ExportOptions, ExportResult, Project } from "../types"
 import type { ExportAdapter } from "./export-adapter"
-import { PDFExportAdapter } from "./pdf-export-adapter"
+
 import { JSONExportAdapter } from "./json-export-adapter"
+import { PDFExportAdapter } from "./pdf-export-adapter"
 
 export class ExportManager {
   private adapters: Map<ExportFormat, ExportAdapter> = new Map()
@@ -17,8 +18,8 @@ export class ExportManager {
 
     if (!adapter) {
       return {
-        success: false,
         error: `Export format '${options.format}' is not supported`,
+        success: false,
       }
     }
 

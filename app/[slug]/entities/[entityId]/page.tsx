@@ -1,22 +1,25 @@
 "use client"
 
 import { useEffect, useState } from "react"
+
 import { useRouter, useSearchParams } from "next/navigation"
+
+import type { EntityProperty, Note } from "@/lib/types"
+
+import { AddNoteDialog } from "@/components/add-note-dialog"
+import { AddPropertyDialog } from "@/components/add-property-dialog"
+import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
+import { EditableText } from "@/components/editable-text"
+import { NotesList } from "@/components/notes-list"
+import { PropertyList } from "@/components/property-list"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PropertyList } from "@/components/property-list"
-import { NotesList } from "@/components/notes-list"
+import { useToast } from "@/components/ui/use-toast"
 import { UsageList } from "@/components/usage-list"
-import { AddPropertyDialog } from "@/components/add-property-dialog"
-import { AddNoteDialog } from "@/components/add-note-dialog"
+import { useAutosave } from "@/hooks/use-autosave"
 import { useProject } from "@/hooks/use-project"
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
-import { useToast } from "@/components/ui/use-toast"
-import { BreadcrumbNavigation } from "@/components/breadcrumb-navigation"
-import { EditableText } from "@/components/editable-text"
-import { useAutosave } from "@/hooks/use-autosave"
-import type { EntityProperty, Note } from "@/lib/types"
 import { goToProject } from "@/lib/utils/navigateTo"
 
 export default function EntityPage({
@@ -26,7 +29,7 @@ export default function EntityPage({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { project, loading, error, saveProject } = useProject(params.id)
+  const { error, loading, project, saveProject } = useProject(params.id)
   const [activeTab, setActiveTab] = useState("properties")
   const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false)
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false)
@@ -87,8 +90,8 @@ export default function EntityPage({
     setIsAddPropertyOpen(false)
 
     toast({
-      title: "Özellik eklendi",
       description: `"${property.name}" özelliği başarıyla eklendi.`,
+      title: "Özellik eklendi",
       variant: "success",
     })
 
@@ -115,8 +118,8 @@ export default function EntityPage({
     setIsAddNoteOpen(false)
 
     toast({
-      title: "Not eklendi",
       description: `"${note.title}" notu başarıyla eklendi.`,
+      title: "Not eklendi",
       variant: "success",
     })
 
@@ -194,8 +197,8 @@ export default function EntityPage({
 
   // Breadcrumb items
   const breadcrumbItems = [
-    { label: project.name, href: `/project/${params.id}` },
-    { label: getEntityTypeName(), href: `/project/${params.id}?tab=entities&type=${entity.type}` },
+    { href: goToProject({ projectSlug: project.slug }), label: project.name },
+    { href: `/project/${params.id}?tab=entities&type=${entity.type}`, label: getEntityTypeName() },
     { label: entity.name },
   ]
 
@@ -208,10 +211,10 @@ export default function EntityPage({
         <div className="space-y-2">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 flex items-center gap-2">
             <EditableText
-              value={entity.name}
-              onChange={handleEntityNameChange}
-              isTitle
               className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
+              isTitle
+              onChange={handleEntityNameChange}
+              value={entity.name}
             />
             {hasUnsavedChanges && <span className="text-red-500">*</span>}
           </h1>
@@ -225,10 +228,10 @@ export default function EntityPage({
 
           <div className="text-muted-foreground">
             <EditableText
-              value={entity.description || ""}
+              multiline
               onChange={handleEntityDescriptionChange}
               placeholder="Öğe açıklaması ekleyin..."
-              multiline
+              value={entity.description || ""}
             />
           </div>
         </div>
@@ -236,7 +239,6 @@ export default function EntityPage({
 
       <div className="flex-1 overflow-auto p-4">
         <Tabs
-          value={activeTab}
           onValueChange={(value) => {
             setActiveTab(value)
             // Update URL
@@ -244,6 +246,7 @@ export default function EntityPage({
             params.set("tab", value)
             router.push(`${router.pathname}?${params.toString()}`)
           }}
+          value={activeTab}
         >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="properties">Özellikler</TabsTrigger>
@@ -251,25 +254,25 @@ export default function EntityPage({
             <TabsTrigger value="usages">Kullanımlar</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="properties" className="mt-4">
+          <TabsContent className="mt-4" value="properties">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Özellikler</h2>
               <Button onClick={() => setIsAddPropertyOpen(true)}>Özellik Ekle</Button>
             </div>
 
-            <PropertyList properties={entity.properties} entityId={entity.id} projectId={params.id} />
+            <PropertyList entityId={entity.id} projectId={params.id} properties={entity.properties} />
           </TabsContent>
 
-          <TabsContent value="notes" className="mt-4">
+          <TabsContent className="mt-4" value="notes">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Notlar</h2>
               <Button onClick={() => setIsAddNoteOpen(true)}>Not Ekle</Button>
             </div>
 
-            <NotesList notes={entity.notes || []} entityId={entity.id} projectId={params.id} />
+            <NotesList entityId={entity.id} notes={entity.notes || []} projectId={params.id} />
           </TabsContent>
 
-          <TabsContent value="usages" className="mt-4">
+          <TabsContent className="mt-4" value="usages">
             <Card>
               <CardHeader>
                 <CardTitle>Kullanım İstatistikleri</CardTitle>
@@ -279,7 +282,7 @@ export default function EntityPage({
                   Bu öğe toplam {usagesWithTitles.reduce((sum, usage) => sum + usage.count, 0)} kez kullanılmıştır.
                 </p>
 
-                <UsageList usages={usagesWithTitles} projectId={params.id} />
+                <UsageList projectId={params.id} usages={usagesWithTitles} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -287,13 +290,13 @@ export default function EntityPage({
       </div>
 
       <AddPropertyDialog
-        open={isAddPropertyOpen}
-        onOpenChange={setIsAddPropertyOpen}
-        onAddProperty={handleAddProperty}
         existingProperties={entity.properties}
+        onAddProperty={handleAddProperty}
+        onOpenChange={setIsAddPropertyOpen}
+        open={isAddPropertyOpen}
       />
 
-      <AddNoteDialog open={isAddNoteOpen} onOpenChange={setIsAddNoteOpen} onAddNote={handleAddNote} />
+      <AddNoteDialog onAddNote={handleAddNote} onOpenChange={setIsAddNoteOpen} open={isAddNoteOpen} />
     </div>
   )
 }

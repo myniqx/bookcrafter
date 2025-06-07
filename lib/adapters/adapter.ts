@@ -1,8 +1,9 @@
 import type { Project, ProjectBase } from "../types"
-import { LocalStorageAdapter } from "./local-storage-adapter"
-import { JsonFileAdapter } from "./json-file-adapter"
+
 import { CompressedFileAdapter } from "./compressed-file-adapter"
 import { DirectorySyncAdapter } from "./directory-sync-adapter"
+import { JsonFileAdapter } from "./json-file-adapter"
+import { LocalStorageAdapter } from "./local-storage-adapter"
 
 // Base adapter interface
 export interface StorageAdapter {

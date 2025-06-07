@@ -1,7 +1,8 @@
+/* eslint-disable perfectionist/sort-objects */
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 type Language = "tr" | "en"
 
@@ -11,82 +12,84 @@ interface LanguageContextType {
   t: (key: string, params?: Record<string, string | number>) => string
 }
 
-const translations = {
-  tr: {
-    // App general
-    app_title: "Kitap Yazma ve Dünya İnşa Etme",
-    welcome: "Hoş Geldiniz",
-    welcome_description:
-      "Kitap yazma ve dünya inşa etme uygulamasına hoş geldiniz. Bu uygulama ile kitap serileri yazabilir, karakterler ve mekanlar gibi dünya inşa etme öğeleri oluşturabilir ve bunları yazılarınızda dinamik olarak kullanabilirsiniz.",
-    get_started: "Başlamak için yeni bir proje oluşturun veya mevcut bir projeyi yükleyin.",
+const tr = {
+  // App general
+  app_title: "Kitap Yazma ve Dünya İnşa Etme",
+  welcome: "Hoş Geldiniz",
+  welcome_description:
+    "Kitap yazma ve dünya inşa etme uygulamasına hoş geldiniz. Bu uygulama ile kitap serileri yazabilir, karakterler ve mekanlar gibi dünya inşa etme öğeleri oluşturabilir ve bunları yazılarınızda dinamik olarak kullanabilirsiniz.",
+  get_started: "Başlamak için yeni bir proje oluşturun veya mevcut bir projeyi yükleyin.",
 
-    // Navigation
-    home: "Ana Sayfa",
-    projects: "Projeler",
-    books: "Kitaplar",
-    entities: "Öğeler",
-    settings: "Ayarlar",
+  // Navigation
+  home: "Ana Sayfa",
+  projects: "Projeler",
+  books: "Kitaplar",
+  entities: "Öğeler",
+  settings: "Ayarlar",
 
-    // Actions
-    new_project: "Yeni Proje",
-    load_project: "Proje Yükle",
-    save: "Kaydet",
-    delete: "Sil",
-    edit: "Düzenle",
-    cancel: "İptal",
-    create: "Oluştur",
-    load: "Yükle",
+  // Actions
+  new_project: "Yeni Proje",
+  load_project: "Proje Yükle",
+  save: "Kaydet",
+  delete: "Sil",
+  edit: "Düzenle",
+  cancel: "İptal",
+  create: "Oluştur",
+  load: "Yükle",
 
-    // Projects
-    your_projects: "Projeleriniz",
-    autosaved_projects: "Otomatik Kaydedilmiş Projeler",
-    no_projects_yet: "Henüz hiç proje yok. Yeni bir proje oluşturun.",
-    no_autosaved_projects: "Henüz hiç otomatik kaydedilmiş proje yok.",
-    untitled_project: "Başlıksız Proje",
+  // Projects
+  your_projects: "Projeleriniz",
+  autosaved_projects: "Otomatik Kaydedilmiş Projeler",
+  no_projects_yet: "Henüz hiç proje yok. Yeni bir proje oluşturun.",
+  no_autosaved_projects: "Henüz hiç otomatik kaydedilmiş proje yok.",
+  untitled_project: "Başlıksız Proje",
 
-    // World
-    world_items_tab: "Varlıklar",
+  // World
+  world_items_tab: "Varlıklar",
 
-    // Books
-    new_book: "Yeni Kitap",
-    no_books_yet: "Henüz hiç kitap yok.",
-    create_first_book: "İlk Kitabınızı Oluşturun",
-    untitled_book: "Başlıksız Kitap",
-    books_tab: "Kitaplar",
+  // Books
+  new_book: "Yeni Kitap",
+  no_books_yet: "Henüz hiç kitap yok.",
+  create_first_book: "İlk Kitabınızı Oluşturun",
+  untitled_book: "Başlıksız Kitap",
+  books_tab: "Kitaplar",
 
-    // Chapters
-    chapters: "Bölümler",
-    new_chapter: "Yeni Bölüm",
-    no_chapters_yet: "Henüz hiç bölüm yok.",
-    create_first_chapter: "İlk Bölümünüzü Oluşturun",
-    untitled_chapter: "Başlıksız Bölüm",
+  // Chapters
+  chapters: "Bölümler",
+  new_chapter: "Yeni Bölüm",
+  no_chapters_yet: "Henüz hiç bölüm yok.",
+  create_first_chapter: "İlk Bölümünüzü Oluşturun",
+  untitled_chapter: "Başlıksız Bölüm",
 
-    // Content
-    no_description: "Açıklama yok",
-    add_description: "Açıklama ekleyin",
-    characters: "karakter",
-    empty: "boş",
+  // Content
+  no_description: "Açıklama yok",
+  add_description: "Açıklama ekleyin",
+  characters: "karakter",
+  empty: "boş",
 
-    // Status
-    draft: "Taslak",
-    in_progress: "Devam Ediyor",
-    completed: "Tamamlandı",
+  // Status
+  draft: "Taslak",
+  in_progress: "Devam Ediyor",
+  completed: "Tamamlandı",
 
-    // Counts
-    book_count: "Kitap Sayısı",
-    entity_count: "Öğe Sayısı",
+  // Counts
+  book_count: "Kitap Sayısı",
+  entity_count: "Öğe Sayısı",
 
-    // Dates
-    created: "Oluşturulma",
-    last_updated: "Son Güncelleme",
-    unknown: "Bilinmiyor",
+  // Dates
+  created: "Oluşturulma",
+  last_updated: "Son Güncelleme",
+  unknown: "Bilinmiyor",
 
-    // Loading
-    loading: "Yükleniyor...",
+  // Loading
+  loading: "Yükleniyor...",
 
-    // Autosave
-    autosaved: "Otomatik Kaydedilmiş",
-  },
+  // Autosave
+  autosaved: "Otomatik Kaydedilmiş",
+}
+
+const translations: Record<Language, typeof tr> = {
+  tr,
   en: {
     // App general
     app_title: "Book Writing and World Building",
@@ -191,7 +194,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("language", newLanguage)
   }
 
-  const t = (key: string, params?: Record<string, string | number>): string => {
+  const t = (key: keyof typeof tr, params?: Record<string, string | number>): string => {
     const translation = translations[language]?.[key] || translations.en?.[key] || key
     return formatTranslation(translation, params)
   }

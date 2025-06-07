@@ -1,6 +1,8 @@
-import { BaseExportAdapter } from "./export-adapter"
-import type { Project, ExportOptions, ExportResult } from "../types"
 import jsPDF from "jspdf"
+
+import type { ExportOptions, ExportResult, Project } from "../types"
+
+import { BaseExportAdapter } from "./export-adapter"
 
 export class PDFExportAdapter extends BaseExportAdapter {
   type = "pdf"
@@ -8,14 +10,14 @@ export class PDFExportAdapter extends BaseExportAdapter {
   async export(project: Project, options: ExportOptions): Promise<ExportResult> {
     try {
       const pdf = new jsPDF({
+        format: options.pageSize || "A4",
         orientation: "portrait",
         unit: "mm",
-        format: options.pageSize || "A4",
       })
 
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
-      const margins = options.margins || { top: 20, bottom: 20, left: 20, right: 20 }
+      const margins = options.margins || { bottom: 20, left: 20, right: 20, top: 20 }
       const contentWidth = pageWidth - margins.left - margins.right
 
       let yPosition = margins.top
@@ -201,15 +203,15 @@ export class PDFExportAdapter extends BaseExportAdapter {
       const pdfBlob = pdf.output("blob")
 
       return {
-        success: true,
         data: pdfBlob,
         filename: this.generateFilename(project, "pdf"),
+        success: true,
       }
     } catch (error) {
       console.error("PDF export error:", error)
       return {
-        success: false,
         error: "PDF oluşturulurken hata oluştu",
+        success: false,
       }
     }
   }

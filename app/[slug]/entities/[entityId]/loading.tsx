@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Loading() {
@@ -38,7 +38,7 @@ export default function Loading() {
             </CardHeader>
             <CardContent>
               {[1, 2, 3].map((i) => (
-                <div key={i} className="mb-4 pb-4 border-b last:border-0">
+                <div className="mb-4 pb-4 border-b last:border-0" key={i}>
                   <Skeleton className="h-5 w-32 mb-2" />
                   <Skeleton className="h-4 w-full" />
                 </div>

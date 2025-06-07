@@ -1,5 +1,6 @@
-import { BaseAIAdapter } from "./ai-adapter"
 import type { AIRequest, AIResponse, AISettings, OllamaModel } from "../types"
+
+import { BaseAIAdapter } from "./ai-adapter"
 
 export class OllamaAdapter extends BaseAIAdapter {
   provider = "ollama"
@@ -10,19 +11,19 @@ export class OllamaAdapter extends BaseAIAdapter {
 
     try {
       const response = await fetch(`${ollamaUrl}/api/generate`, {
-        method: "POST",
+        body: JSON.stringify({
+          model: settings.model || "llama2",
+          options: {
+            num_predict: settings.maxTokens || 1000,
+            temperature: settings.temperature || 0.7,
+          },
+          prompt: this.buildPrompt(request),
+          stream: false,
+        }),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: settings.model || "llama2",
-          prompt: this.buildPrompt(request),
-          stream: false,
-          options: {
-            temperature: settings.temperature || 0.7,
-            num_predict: settings.maxTokens || 1000,
-          },
-        }),
+        method: "POST",
       })
 
       if (!response.ok) {
@@ -32,21 +33,21 @@ export class OllamaAdapter extends BaseAIAdapter {
       const data = await response.json()
 
       return {
-        success: true,
         originalText: request.selectedText || "",
+        success: true,
         suggestedText: data.response || "",
         usage: {
-          promptTokens: data.prompt_eval_count || 0,
           completionTokens: data.eval_count || 0,
+          promptTokens: data.prompt_eval_count || 0,
           totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0),
         },
       }
     } catch (error) {
       return {
-        success: false,
-        originalText: request.selectedText || "",
-        suggestedText: "",
         error: error instanceof Error ? error.message : "Unknown error",
+        originalText: request.selectedText || "",
+        success: false,
+        suggestedText: "",
       }
     }
   }
