@@ -8,7 +8,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
 import { LocalStorageAdapter } from "@/lib/adapters/local-storage-adapter";
 import { ElectronFileAdapter } from "@/lib/adapters/electron-file-adapter";
 import type { Book, Chapter, Entity, Project } from "@/lib/types";
@@ -19,6 +18,8 @@ import { useLanguage } from "@/contexts/language-context";
 
 interface ProjectContextType {
   project: Project;
+  books: Book[];
+  entities: Entity[];
   loading: boolean;
   error: string | null;
   saveProject: (updatedProject?: Project) => Promise<boolean>;
@@ -360,6 +361,8 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
       addBook,
       addChapter,
       addEntity,
+      books: project ? project.books : [],
+      entities: project ? project.entities : [],
       error,
       getBook,
       getChapter,
