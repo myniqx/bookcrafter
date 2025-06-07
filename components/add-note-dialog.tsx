@@ -13,23 +13,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { generateId } from "@/lib/utils"
+import { DialogClose } from "@radix-ui/react-dialog"
+import { useLanguage } from "@/contexts/language-context"
+import { useEntity } from "@/providers/entity-provider"
+import { useToast } from "./ui/use-toast"
 
-interface AddNoteDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onAddNote: (note: Note) => void
-}
 
-export function AddNoteDialog({ onAddNote, onOpenChange, open }: AddNoteDialogProps) {
+export function AddNoteDialog() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+  const [open, onOpenChange] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useLanguage()
+  const { entity, saveProject, updateEntity } = useEntity()
+  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,7 +59,17 @@ export function AddNoteDialog({ onAddNote, onOpenChange, open }: AddNoteDialogPr
         title: title.trim(),
       }
 
-      onAddNote(newNote)
+      updateEntity({
+        notes: [...(entity.notes || []), newNote]
+      })
+
+      saveProject()
+
+      toast({
+        description: `"${newNote.title}" notu başarıyla eklendi.`,
+        title: "Not eklendi",
+        variant: "success",
+      })
 
       // Reset form
       setTitle("")
@@ -70,6 +84,9 @@ export function AddNoteDialog({ onAddNote, onOpenChange, open }: AddNoteDialogPr
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogTrigger asChild>
+        <Button >Not Ekle</Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -106,9 +123,11 @@ export function AddNoteDialog({ onAddNote, onOpenChange, open }: AddNoteDialogPr
           </div>
 
           <DialogFooter>
-            <Button disabled={isSubmitting} onClick={() => onOpenChange(false)} type="button" variant="outline">
-              İptal
-            </Button>
+            <DialogClose asChild>
+              <Button disabled={isSubmitting} type="button" variant="outline">
+                {t('cancel')}
+              </Button>
+            </DialogClose>
             <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Ekleniyor..." : "Ekle"}
             </Button>

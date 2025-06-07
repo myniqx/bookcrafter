@@ -10,37 +10,29 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { generateId, slugify } from "@/lib/utils"
+import { useProject } from "@/providers/project-provider"
+import { useLanguage } from "@/contexts/language-context"
 
 interface CreateEntityFormProps {
   entityType: EntityType
-  onCreateEntity: (entity: Entity) => void
   onCancel: () => void
 }
 
-export function CreateEntityForm({ entityType, onCancel, onCreateEntity }: CreateEntityFormProps) {
+export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps) {
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { addEntity } = useProject()
+  const { t } = useLanguage()
 
   // Update slug when name changes
   useEffect(() => {
     setSlug(slugify(name))
   }, [name])
 
-  const getEntityTypeTitle = () => {
-    switch (entityType) {
-      case "character":
-        return "Karakter"
-      case "location":
-        return "Mekan"
-      case "item":
-        return "Eşya"
-      case "event":
-        return "Olay"
-    }
-  }
+  const getEntityTypeTitle = () => t(entityType)
 
   const getDefaultProperties = (): EntityProperty[] => {
     const now = new Date().toISOString()
@@ -127,7 +119,6 @@ export function CreateEntityForm({ entityType, onCancel, onCreateEntity }: Creat
       const newEntity: Entity = {
         createdAt: now,
         description: description.trim() || undefined,
-        id: generateId(),
         name: name.trim(),
         notes: [],
         properties: getDefaultProperties(),
@@ -137,7 +128,7 @@ export function CreateEntityForm({ entityType, onCancel, onCreateEntity }: Creat
         usages: [],
       }
 
-      onCreateEntity(newEntity)
+      addEntity(newEntity)
 
       // Reset form
       setName("")
@@ -205,10 +196,10 @@ export function CreateEntityForm({ entityType, onCancel, onCreateEntity }: Creat
 
       <div className="flex justify-end gap-2">
         <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">
-          İptal
+          {t("cancel")}
         </Button>
         <Button disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
+          {isSubmitting ? t("creating") : t("create")}
         </Button>
       </div>
     </form>

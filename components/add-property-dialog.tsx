@@ -13,23 +13,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { generateId } from "@/lib/utils"
+import { useEntity } from "@/providers/entity-provider"
+import { useToast } from "./ui/use-toast"
+import { DialogClose } from "@radix-ui/react-dialog"
+import { useLanguage } from "@/contexts/language-context"
 
-interface AddPropertyDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onAddProperty: (property: EntityProperty) => void
-  existingProperties: EntityProperty[]
-}
 
-export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenChange, open }: AddPropertyDialogProps) {
+export function AddPropertyDialog() {
   const [name, setName] = useState("")
   const [value, setValue] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [open, onOpenChange] = useState(false)
+  const { entity, saveProject, updateEntity } = useEntity()
+  const { toast } = useToast()
+  const { t } = useLanguage()
+  const properties = entity.properties || []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +44,7 @@ export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenCha
     }
 
     // Check if property name already exists
-    if (existingProperties.some((p) => p.name.toLowerCase() === name.trim().toLowerCase())) {
+    if (properties.some((p) => p.name.toLowerCase() === name.trim().toLowerCase())) {
       setError("Bu özellik adı zaten kullanılıyor.")
       return
     }
@@ -51,12 +55,23 @@ export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenCha
     try {
       const newProperty: EntityProperty = {
         id: generateId(),
-        isDefault: existingProperties.length === 0, // First property is default
+        isDefault: properties.length === 0, // First property is default
         name: name.trim(),
         value: value.trim(),
       }
 
-      onAddProperty(newProperty)
+      updateEntity({
+        properties: [...entity.properties, newProperty],
+      })
+
+      saveProject()
+
+      toast({
+        description: `"${newProperty.name}" özelliği başarıyla eklendi.`,
+        title: "Özellik eklendi",
+        variant: "success",
+      })
+
 
       // Reset form
       setName("")
@@ -71,6 +86,9 @@ export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenCha
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogTrigger asChild>
+        <Button >Özellik Ekle</Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -108,9 +126,11 @@ export function AddPropertyDialog({ existingProperties, onAddProperty, onOpenCha
           </div>
 
           <DialogFooter>
-            <Button disabled={isSubmitting} onClick={() => onOpenChange(false)} type="button" variant="outline">
-              İptal
-            </Button>
+            <DialogClose asChild>
+              <Button disabled={isSubmitting} type="button" variant="outline">
+                {t('cancel')}
+              </Button>
+            </DialogClose>
             <Button disabled={isSubmitting} type="submit">
               {isSubmitting ? "Ekleniyor..." : "Ekle"}
             </Button>

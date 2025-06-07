@@ -26,7 +26,9 @@ interface CreateEntityDialogProps {
   onCreateEntity: (entity: Entity) => void
 }
 
-export function CreateEntityDialog({ entityType, onCreateEntity, onOpenChange, open }: CreateEntityDialogProps) {
+export function CreateEntityDialog({ entityType, onCreateEntity }: CreateEntityDialogProps) {
+  const [open, onOpenChange] = useState(false)
+
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
@@ -136,7 +138,6 @@ export function CreateEntityDialog({ entityType, onCreateEntity, onOpenChange, o
       const newEntity: Entity = {
         createdAt: now,
         description: description.trim() || undefined,
-        id: generateId(),
         name: name.trim(),
         notes: [],
         properties: getDefaultProperties(),
@@ -162,6 +163,7 @@ export function CreateEntityDialog({ entityType, onCreateEntity, onOpenChange, o
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
+
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
