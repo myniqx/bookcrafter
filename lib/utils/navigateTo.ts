@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { Book, Chapter, Entity, Project } from "../types";
 
 interface GoToProjectProps {
-  project: Project
+  project: Pick<Project, 'slug'>
   router?: ReturnType<typeof useRouter>
   params?: string
 }
@@ -17,8 +17,8 @@ interface GotoBookProps extends GoToProjectProps {
 }
 
 interface GotoChapterProps extends GoToProjectProps {
-  book: Book
-  chapter?: Chapter
+  book: Pick<Book, 'slug'>
+  chapter?: Pick<Chapter, 'slug'>
 }
 
 export const goToProject = ({ params, project, router }: GoToProjectProps) => {

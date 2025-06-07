@@ -55,7 +55,7 @@ export function LoadProjectDialog({ onOpenChange, open }: LoadProjectDialogProps
       localStorage.setItem(projectsListKey, JSON.stringify(projectsList))
 
       onOpenChange(false)
-      goToProject({ projectSlug: project.slug, router })
+      goToProject({ project, router })
     } catch (err) {
       console.error("Proje yüklenirken hata oluştu:", err)
       setError("Geçersiz proje dosyası. Lütfen doğru JSON formatında bir dosya seçin.")

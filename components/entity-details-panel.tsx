@@ -7,6 +7,7 @@ import type { Entity } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { goToChapter } from "@/lib/utils/navigateTo"
 
 interface EntityDetailsPanelProps {
   entity: Entity | null
@@ -126,8 +127,11 @@ export function EntityDetailsPanel({ entity, projectId }: EntityDetailsPanelProp
                 {entity.usages.map((usage) => (
                   <Link
                     className="text-xs block hover:underline text-blue-600 dark:text-blue-400"
-                    href={`/project/${projectId}/book/${usage.bookId}/chapter/${usage.chapterId}`}
-                    key={`${usage.bookId}-${usage.chapterId}`}
+                    href={goToChapter({
+                      book: { slug: usage.bookSlug },
+                      chapter: { slug: usage.chapterSlug }, project
+                    })}
+                    key={`${usage.bookSlug}-${usage.chapterSlug}`}
                   >
                     • {usage.count} kez kullanıldı
                   </Link>

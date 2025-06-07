@@ -3,7 +3,7 @@
 import { FileText } from "lucide-react"
 import Link from "next/link"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
 import { useBook } from "@/providers/book-provider"
 
@@ -37,21 +37,21 @@ export function ChapterList() {
           <Link href={chapter.href} key={chapter.slug}>
             <Card className="cursor-pointer hover:bg-muted/20 transition-colors">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">#{index + 1}</span>
                   <EditableText
                     className="flex-1"
                     onChange={(value) => updateChapter(chapter.slug, { title: value })}
                     value={chapter.title || t("untitled_chapter")}
                   />
-                </CardTitle>
-                <CardDescription>
+                </div>
+                <div>
                   <EditableText
                     onChange={(value) => updateChapter(chapter.slug, { description: value })}
                     placeholder={t("add_description")}
                     value={chapter.description || t("no_description")}
                   />
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex justify-between items-center">

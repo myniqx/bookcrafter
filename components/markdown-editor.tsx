@@ -8,10 +8,11 @@ import type { Entity, Project } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 
 import { AIPromptDropdown } from "./ai-prompt-dropdown"
+import { useChapter } from "@/providers/chapter-provider"
+import { EntityBadgesList } from "./entity-badges-list"
 
 interface MarkdownEditorProps {
   content: string
-  entities: Entity[]
   project: Project
   currentChapter?: string
   onChange: (content: string) => void
@@ -21,11 +22,11 @@ interface MarkdownEditorProps {
 export function MarkdownEditor({
   content,
   currentChapter,
-  entities,
   onChange,
   onProcessedContentChange,
   project,
 }: MarkdownEditorProps) {
+  const { book, chapter, entities } = useChapter()
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)
   const [entitySuggestions, setEntitySuggestions] = useState<Entity[]>([])
   const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ left: 0, top: 0 })
@@ -40,7 +41,7 @@ export function MarkdownEditor({
     let processed = content
 
     // Replace entity references (@slug or @slug.property)
-    entities.forEach((entity) => {
+    entities?.forEach((entity) => {
       // Replace @slug with default property
       const defaultProperty = entity.properties.find((p) => p.isDefault)
       if (defaultProperty) {
@@ -129,12 +130,13 @@ export function MarkdownEditor({
 
         // Filter entities based on the search term
         const suggestions = entities
-          .filter(
+          ?.filter(
             (entity) =>
               entity.name.toLowerCase().includes(term.toLowerCase()) ||
               entity.slug.toLowerCase().includes(term.toLowerCase()),
           )
           .slice(0, 10) // Limit to 10 suggestions
+          || []
 
         setEntitySuggestions(suggestions)
         setSelectedIndex(0) // Reset selected index when suggestions change
@@ -276,6 +278,8 @@ export function MarkdownEditor({
         ref={textareaRef}
         value={content}
       />
+
+      <EntityBadgesList entities={project.entities} />
 
       {showEntitySuggestions && (
         <div

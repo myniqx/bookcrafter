@@ -144,7 +144,7 @@ export function CreateChapterDialog() {
           </div>
 
           <DialogFooter>
-            <DialogClose>
+            <DialogClose asChild>
               <Button disabled={isSubmitting} type="button" variant="outline">
                 İptal
               </Button>

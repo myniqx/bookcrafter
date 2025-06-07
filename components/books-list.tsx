@@ -45,20 +45,20 @@ export function BooksList() {
           <Link href={goToBook({ book, project })} key={book.slug}>
             <Card className="h-full cursor-pointer hover:bg-muted/20 transition-colors">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <EditableText
                     className="flex-1"
                     onChange={(value) => updateBook(book.slug, { title: value })}
                     value={book.title || t("untitled_book")}
                   />
-                </CardTitle>
-                <CardDescription>
+                </div>
+                <div>
                   <EditableText
                     onChange={(value) => updateBook(book.slug, { description: value })}
                     placeholder={t("add_description")}
                     value={book.description || t("no_description")}
                   />
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-2">

@@ -36,6 +36,10 @@ const tr = {
   cancel: "İptal",
   create: "Oluştur",
   load: "Yükle",
+  creating: "Oluşturuluyor...",
+
+  // common
+  no_item_found: "Öğe bulunamadı",
 
   // Projects
   your_projects: "Projeleriniz",
@@ -64,7 +68,6 @@ const tr = {
   // Content
   no_description: "Açıklama yok",
   add_description: "Açıklama ekleyin",
-  characters: "karakter",
   empty: "boş",
 
   // Status
@@ -86,6 +89,16 @@ const tr = {
 
   // Autosave
   autosaved: "Otomatik Kaydedilmiş",
+
+  // entity types
+  character: "Karakter",
+  location: "Mekan",
+  item: "Eşya",
+  event: "Olay",
+  characters: "Karakterler",
+  locations: "Mekanlar",
+  items: "Eşyalar",
+  events: "Olaylar",
 }
 
 const translations: Record<Language, typeof tr> = {

@@ -88,13 +88,13 @@ export interface Note {
 }
 
 export interface EntityUsage {
-  bookId: string
-  chapterId: string
+  bookSlug: string
+  chapterSlug: string
   count: number
 }
 
 export interface EntityReference {
-  entityId: string
+  entitySlug: string
   property?: string
 }
 

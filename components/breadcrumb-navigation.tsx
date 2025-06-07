@@ -14,13 +14,9 @@ interface BreadcrumbItem {
   href?: string
 }
 
-interface BreadcrumbNavigationProps {
-  items: BreadcrumbItem[]
-  projectId: string
-}
 
 export function BreadcrumbNavigation() {
-  const { getBook, getChapter, getEntity, project, saveProject } = useProject()
+  const { getBook, getChapter, getEntity, project } = useProject()
   const { bookSlug, chapterSlug, entitySlug } = useParams()
   const book = bookSlug && getBook(bookSlug as string)
   const chapter = bookSlug && chapterSlug && getChapter(bookSlug as string, chapterSlug as string)
@@ -52,7 +48,7 @@ export function BreadcrumbNavigation() {
 
 
   return (
-    <div className="flex items-center justify-between w-full px-4 py-2 border-b">
+    <div className="flex items-center justify-between w-full px-4 py-2">
       <div className="flex items-center">
         <Link href={goToProject({ project })}>
           <Button className="h-8 w-8" size="icon" variant="ghost">

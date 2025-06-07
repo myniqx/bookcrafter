@@ -15,7 +15,7 @@ export function ChapterHeader() {
   const backLink = goToChapter({ book, project })
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 px-2">
       <div className="flex items-center gap-2">
         <Button asChild className="rounded-full hover:bg-muted/50" size="icon" variant="ghost">
           <Link href={backLink}>

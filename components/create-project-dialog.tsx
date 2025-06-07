@@ -68,7 +68,7 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
       })
 
       onOpenChange(false)
-      goToProject({ projectSlug: slug, router })
+      goToProject({ project: { slug }, router })
     } catch (err) {
       console.error("Proje oluşturulurken hata oluştu:", err)
       setError("Proje oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.")

@@ -385,7 +385,7 @@ export function ExportDialog() {
         </div>
 
         <DialogFooter>
-          <DialogClose>
+          <DialogClose asChild>
             <Button disabled={isExporting} variant="outline">
               İptal
             </Button>
