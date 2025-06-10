@@ -9,10 +9,11 @@ import { useBook } from "@/providers/book-provider"
 
 import { CreateChapterDialog } from "./create-chapter-dialog"
 import { EditableText } from "./editable-text"
+import { goToChapter } from "@/lib/utils/navigateTo"
 
 
 export function ChapterList() {
-  const { chapters, updateChapter } = useBook()
+  const { book, chapters, project, updateChapter } = useBook()
   const { t } = useLanguage()
 
   if (!chapters) {
@@ -34,7 +35,7 @@ export function ChapterList() {
 
       <div className="grid gap-4">
         {chapters.map((chapter, index) => (
-          <Link href={chapter.href} key={chapter.slug}>
+          <Link href={goToChapter({ book, chapter, project })} key={chapter.slug}>
             <Card className="cursor-pointer hover:bg-muted/20 transition-colors">
               <CardHeader>
                 <div className="flex items-center gap-2">

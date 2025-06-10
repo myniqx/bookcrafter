@@ -48,30 +48,30 @@ export class LocalStorageAdapter implements StorageAdapter {
 
     try {
       // Update the project
-      localStorage.setItem(`${this.PROJECT_PREFIX}${project.slug}`, JSON.stringify(project))
+      localStorage.setItem(`${this.PROJECT_PREFIX}${project.metadata.slug}`, JSON.stringify(project))
 
       // Update the projects list
       const projects = await this.getProjects()
-      const existingIndex = projects.findIndex((p) => p.slug === project.slug)
+      const existingIndex = projects.findIndex((p) => p.slug === project.metadata.slug)
 
       if (existingIndex >= 0) {
         projects[existingIndex] = {
-          name: project.name,
-          slug: project.slug,
-          updatedAt: project.updatedAt,
+          name: project.metadata.name,
+          slug: project.metadata.slug,
+          updatedAt: project.metadata.updatedAt,
         }
       } else {
         projects.push({
-          name: project.name,
-          slug: project.slug,
-          updatedAt: project.updatedAt,
+          name: project.metadata.name,
+          slug: project.metadata.slug,
+          updatedAt: project.metadata.updatedAt,
         })
       }
 
       localStorage.setItem(this.PROJECTS_KEY, JSON.stringify(projects))
       return true
     } catch (error) {
-      console.error(`Error saving project ${project.slug}:`, error)
+      console.error(`Error saving project ${project.metadata.slug}:`, error)
       return false
     }
   }
@@ -104,10 +104,10 @@ export class LocalStorageAdapter implements StorageAdapter {
     if (typeof window === "undefined") return false
 
     try {
-      localStorage.setItem(`${this.AUTOSAVE_PREFIX}${project.slug}`, JSON.stringify(project))
+      localStorage.setItem(`${this.AUTOSAVE_PREFIX}${project.metadata.slug}`, JSON.stringify(project))
       return true
     } catch (error) {
-      console.error(`Error saving autosave for project ${project.slug}:`, error)
+      console.error(`Error saving autosave for project ${project.metadata.slug}:`, error)
       return false
     }
   }

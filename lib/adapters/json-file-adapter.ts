@@ -9,7 +9,7 @@ export class JsonFileAdapter implements StorageAdapter {
 
   async saveProject(project: Project): Promise<boolean> {
     // Update cache
-    this.projectsCache.set(project.slug, project)
+    this.projectsCache.set(project.metadata.slug, project)
 
     // Create a JSON file for download
     if (typeof window !== "undefined") {
@@ -19,7 +19,7 @@ export class JsonFileAdapter implements StorageAdapter {
 
       const a = document.createElement("a")
       a.href = url
-      a.download = `${project.slug}.json`
+      a.download = `${project.metadata.slug}.json`
       document.body.appendChild(a)
       a.click()
 
@@ -58,7 +58,7 @@ export class JsonFileAdapter implements StorageAdapter {
               const project = JSON.parse(content) as Project
 
               // Validate that this is the correct project
-              if (project.slug === slug) {
+              if (project.metadata.slug === slug) {
                 this.projectsCache.set(slug, project)
                 resolve(project)
               } else {
@@ -84,9 +84,9 @@ export class JsonFileAdapter implements StorageAdapter {
   async getProjects(): Promise<ProjectBase[]> {
     // For JSON file adapter, we can only list projects that are in the cache
     return Array.from(this.projectsCache.values()).map((project) => ({
-      name: project.name,
-      slug: project.slug,
-      updatedAt: project.updatedAt,
+      name: project.metadata.name,
+      slug: project.metadata.slug,
+      updatedAt: project.metadata.updatedAt,
     }))
   }
 

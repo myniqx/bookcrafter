@@ -31,11 +31,11 @@ import { generateTextDiff } from "@/lib/utils/text-diff"
 
 import { AISettingsDialog } from "./ai-settings-dialog"
 import { AITextDiffModal } from "./ai-text-diff-modal"
+import { useProject } from "@/providers/project-provider"
 
 interface AIPromptDropdownProps {
   selectedText: string
   onTextReplace: (newText: string) => void
-  project: Project
   currentChapter?: string
   currentContent?: string
 }
@@ -44,9 +44,9 @@ export function AIPromptDropdown({
   currentChapter,
   currentContent,
   onTextReplace,
-  project,
   selectedText,
 }: AIPromptDropdownProps) {
+  const { aiSettings, entities, project, updateAISettings } = useProject()
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
   const [customPrompt, setCustomPrompt] = useState("")
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -63,7 +63,7 @@ export function AIPromptDropdown({
 
   const getAISettings = (): AISettings => {
     return (
-      project.aiSettings || {
+      aiSettings || {
         maxTokens: 1000,
         model: "gpt-3.5-turbo",
         provider: "openai",
@@ -73,9 +73,9 @@ export function AIPromptDropdown({
   }
 
   const buildContext = () => {
-    const characters = project.entities.filter((e) => e.type === "character").map((e) => e.name)
+    const characters = entities.filter((e) => e.type === "character").map((e) => e.name)
 
-    const locations = project.entities.filter((e) => e.type === "location").map((e) => e.name)
+    const locations = entities.filter((e) => e.type === "location").map((e) => e.name)
 
     return {
       characters,
@@ -122,6 +122,7 @@ export function AIPromptDropdown({
       })
       setDiffModalOpen(true)
     } catch (error) {
+      console.log('Error executing prompt:', error)
       toast({
         description: "An unexpected error occurred",
         title: "Error",
@@ -141,8 +142,7 @@ export function AIPromptDropdown({
   }
 
   const handleSettingsSave = (settings: AISettings) => {
-    // This would typically update the project's AI settings
-    // For now, we'll just show a success message
+    updateAISettings({ ...aiSettings, ...settings })
     toast({
       description: "AI settings have been updated.",
       title: "Settings saved",

@@ -4,16 +4,15 @@ import { Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { useProject } from "@/hooks/use-project"
+import { useProject } from "@/providers/project-provider"
 
 interface ExportButtonProps {
-  projectId: string
   hasUnsavedChanges: boolean
   onSave: () => void
 }
 
-export function ExportButton({ hasUnsavedChanges, onSave, projectId }: ExportButtonProps) {
-  const { project } = useProject(projectId)
+export function ExportButton({ hasUnsavedChanges, onSave }: ExportButtonProps) {
+  const { project } = useProject()
   const { toast } = useToast()
 
   const handleExport = async () => {
@@ -31,7 +30,7 @@ export function ExportButton({ hasUnsavedChanges, onSave, projectId }: ExportBut
 
       const a = document.createElement("a")
       a.href = url
-      a.download = `${project.name.replace(/\s+/g, "_")}_${project.id}.json`
+      a.download = `${project.name.replace(/\s+/g, "_")}_${project.slug}.json`
       document.body.appendChild(a)
       a.click()
 

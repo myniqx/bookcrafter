@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { Briefcase, Calendar, MapPin, Plus, Search, User } from "lucide-react"
 
-import type { Entity, EntityType } from "@/lib/types"
+import type { EntityType } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useProject } from "@/providers/project-provider"
 
-import { CreateEntityForm } from "./create-entity-form"
 import { useLanguage } from "@/contexts/language-context"
-import Link from "next/link"
 import { goToEntity } from "@/lib/utils/navigateTo"
+import Link from "next/link"
+import { CreateEntityForm } from "./create-entity-form"
 
 
 export function EntityList({ activeType, onTypeChange }: {
@@ -24,7 +24,7 @@ export function EntityList({ activeType, onTypeChange }: {
 }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { addEntity, entities, project, updateEntity } = useProject()
+  const { entities, project } = useProject()
   const { t } = useLanguage()
 
   const filteredEntities = entities
@@ -97,7 +97,7 @@ export function EntityList({ activeType, onTypeChange }: {
                 }).map(([value, Icon]) => (
                   <TabsTrigger key={value} value={value}>
                     <Icon className="h-4 w-4 mr-2" />
-                    {t(`${value}s`)}
+                    {t(`${value as EntityType}s`)}
                   </TabsTrigger>
               ))}
             </TabsList>

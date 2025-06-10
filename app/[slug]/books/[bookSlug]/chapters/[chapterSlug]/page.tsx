@@ -14,7 +14,7 @@ import { ChapterStatistics, Entity } from "@/lib/types"
 import { useChapter } from "@/providers/chapter-provider"
 
 export default function ChapterPage() {
-  const { chapter, project } = useChapter()
+  const { chapter, entities, project } = useChapter()
 
   const [content, setContent] = useState("")
   const [originalContent, setOriginalContent] = useState("")
@@ -30,7 +30,7 @@ export default function ChapterPage() {
 
     setContent(chapter.content || "")
     setOriginalContent(chapter.content || "")
-    calculateStatistics(chapter.content || "", project.entities)
+    calculateStatistics(chapter.content || "", entities)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter?.slug])
 
@@ -41,7 +41,7 @@ export default function ChapterPage() {
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent)
-    calculateStatistics(newContent, project.entities)
+    calculateStatistics(newContent, entities)
   }
 
   const calculateStatistics = (text: string, entities: Entity[]) => {
@@ -92,7 +92,6 @@ export default function ChapterPage() {
                 currentChapter={chapter.title}
                 onChange={handleContentChange}
                 onProcessedContentChange={handleProcessedContentChange}
-                project={project}
               />
             </ScrollArea>
           </ResizablePanel>

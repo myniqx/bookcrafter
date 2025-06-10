@@ -30,7 +30,7 @@ export function SidebarNavigation() {
   const [openBooks, setOpenBooks] = useState(true)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
-  const { hasUnsavedChanges, project, saveProject } = useProject()
+  const { books, hasUnsavedChanges, project, saveProject } = useProject()
   const { bookSlug, chapterSlug, slug } = useParams()
   const { t } = useLanguage()
 
@@ -109,7 +109,7 @@ export function SidebarNavigation() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="pl-4 space-y-1 mt-1">
-                  {project.books.map((book: Book) => (
+                  {books.map((book: Book) => (
                     <Button
                       className="w-full justify-start text-sm"
                       key={book.slug}

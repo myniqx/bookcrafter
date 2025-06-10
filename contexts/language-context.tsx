@@ -9,7 +9,7 @@ type Language = "tr" | "en"
 interface LanguageContextType {
   language: Language
   setLanguage: (language: Language) => void
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: (key: keyof typeof tr, params?: Record<string, string | number>) => string
 }
 
 const tr = {
@@ -37,9 +37,13 @@ const tr = {
   create: "Oluştur",
   load: "Yükle",
   creating: "Oluşturuluyor...",
+  confirm: "Onayla",
+  status: "Durum",
 
   // common
   no_item_found: "Öğe bulunamadı",
+  unsaved_changes: "Kaydedilmemiş Değişiklikler Var",
+  unsaved_changes_message: "Kaydedilmemiş değişiklikleriniz var. Devam etmek istediğinizden emin misiniz?",
 
   // Projects
   your_projects: "Projeleriniz",
@@ -55,6 +59,7 @@ const tr = {
   new_book: "Yeni Kitap",
   no_books_yet: "Henüz hiç kitap yok.",
   create_first_book: "İlk Kitabınızı Oluşturun",
+  create_new_book: "Yeni kitap oluştur",
   untitled_book: "Başlıksız Kitap",
   books_tab: "Kitaplar",
 
@@ -114,7 +119,15 @@ const tr = {
   entity_deleted: "Öğe silindi",
   entity_references_cleaned: "Öğe referansları tüm bölümlerden temizlendi",
   image_deleted: "Resim silindi",
-  image_references_cleaned: "Resim referansları tüm konumlarından temizlendi"
+  image_references_cleaned: "Resim referansları tüm konumlarından temizlendi",
+  chapter_created: "Bölüm oluşturuldu",
+  chapter_created_description: "Bölüm oluşturuldu: {title}",
+  add_new_chapter: "Yeni Bölüm Ekle",
+
+  book_statistics: "Kitap istatistikleri",
+  chapter_count: "Bölüm Sayısı",
+  used_items: "Kullanılan Eşyalar",
+  images_tab: "Resimler"
 }
 
 const translations: Record<Language, typeof tr> = {
@@ -170,7 +183,6 @@ const translations: Record<Language, typeof tr> = {
     // Content
     no_description: "No description",
     add_description: "Add description",
-    characters: "characters",
     empty: "empty",
 
     // Status
@@ -208,6 +220,21 @@ const translations: Record<Language, typeof tr> = {
     entity_references_cleaned: "Entity references cleaned from chapters",
     image_deleted: "Image deleted",
     image_references_cleaned: "Image references cleaned from all locations",
+
+    creating: "Creating...",
+
+    // common
+    no_item_found: "Item not found",
+
+    // entity types
+    character: "Character",
+    location: "Location",
+    item: "Item",
+    event: "Event",
+    characters: "Characters",
+    locations: "Locations",
+    items: "Items",
+    events: "Events",
   },
 }
 

@@ -18,7 +18,7 @@ import { useEntity } from "@/providers/entity-provider"
 
 export default function EntityPage() {
   const searchParams = useSearchParams()
-  const { entity, hasUnsavedChanges, project, updateEntity } = useEntity()
+  const { entity, getBook, getChapter, hasUnsavedChanges, updateEntity } = useEntity()
   const [activeTab, setActiveTab] = useState("properties")
   const { t } = useLanguage()
 
@@ -43,8 +43,8 @@ export default function EntityPage() {
 
   // Get book and chapter titles for usages
   const usagesWithTitles = (entity.usages || []).map((usage) => {
-    const book = project.books.find((b) => b.slug === usage.bookSlug)
-    const chapter = book?.chapters.find((c) => c.slug === usage.chapterSlug)
+    const book = getBook(usage.bookSlug)
+    const chapter = getChapter(usage.bookSlug, usage.chapterSlug)
 
     return {
       ...usage,

@@ -21,18 +21,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useLanguage } from "@/contexts/language-context"
-import { generateId, slugify } from "@/lib/utils"
+import { slugify } from "@/lib/utils"
 import { useProject } from "@/providers/project-provider"
 
 export function CreateBookDialog() {
-  const { project, updateProject } = useProject()
+  const { addBook, books } = useProject()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { t } = useLanguage()
 
-  const bookExist = project.books.length > 0
+  const bookExist = books.length > 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,7 +46,7 @@ export function CreateBookDialog() {
 
     const slug = slugify(trimmedTitle)
 
-    if (project.books.some((book) => book.slug === slug)) {
+    if (books.some((book) => book.slug === slug)) {
       setError("Bu kitap zaten mevcut.")
       return
     }
@@ -58,7 +58,6 @@ export function CreateBookDialog() {
       const now = new Date().toISOString()
 
       const newBook: Book = {
-        chapters: [],
         createdAt: now,
         description: description.trim() || undefined,
         slug,
@@ -66,9 +65,7 @@ export function CreateBookDialog() {
         updatedAt: now,
       }
 
-      updateProject({
-        books: [...project.books, newBook],
-      })
+      addBook(newBook)
 
       // Reset form
       setTitle("")

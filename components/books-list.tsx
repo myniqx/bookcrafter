@@ -1,12 +1,9 @@
 "use client"
-
-
 import { BookOpen } from "lucide-react"
 import Link from "next/link"
 
-
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
 import { goToBook } from "@/lib/utils/navigateTo"
 import { useProject } from "@/providers/project-provider"
@@ -14,13 +11,9 @@ import { useProject } from "@/providers/project-provider"
 import { CreateBookDialog } from "./create-book-dialog"
 import { EditableText } from "./editable-text"
 
-
 export function BooksList() {
   const { t } = useLanguage()
-  const { project, updateBook } = useProject()
-
-
-  const books = project?.books || []
+  const { books, getChaptersForBook, project, updateBook } = useProject()
 
   if (books.length === 0) {
     return (
@@ -64,7 +57,7 @@ export function BooksList() {
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">{t("chapters")}:</span>
-                    <Badge variant="secondary">{book.chapters?.length || 0}</Badge>
+                    <Badge variant="secondary">{getChaptersForBook(book.slug)?.length || 0}</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">{t("status")}:</span>

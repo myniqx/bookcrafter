@@ -1,6 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button";
-import { Entity, Project } from "@/lib/types";
+import { Entity, ProjectContextType } from "@/lib/types";
 import { goToEntity } from "@/lib/utils/navigateTo";
 import { BookOpen, StepBack } from "lucide-react";
 import Link from "next/link";
@@ -8,13 +8,9 @@ import React, { createContext, useContext, useMemo } from "react";
 import { useProject } from "./project-provider";
 
 
-interface EntityContextType {
-  project: Project
-  entities: Entity[]
+interface EntityContextType extends Omit<ProjectContextType, "updateEntity"> {
   entity: Entity
   updateEntity: (data: Partial<Entity>) => void;
-  saveProject: () => Promise<boolean>;
-  hasUnsavedChanges: boolean;
 }
 
 interface EntityProviderProps {
@@ -27,10 +23,8 @@ const EntityContext = createContext<EntityContextType | null>(null);
 export function EntityProvider({ children, entitySlug }: EntityProviderProps) {
   const {
     entities,
-    hasUnsavedChanges,
-    project,
-    saveProject,
-    updateEntity
+    updateEntity,
+    ...rest
   } = useProject();
 
   const value = useMemo(
@@ -40,17 +34,14 @@ export function EntityProvider({ children, entitySlug }: EntityProviderProps) {
       return {
         entities,
         entity: entity!,
-        hasUnsavedChanges,
-        project,
-        saveProject,
-        updateEntity: (data: Partial<Entity>) => updateEntity(entitySlug, data)
+        updateEntity: (data: Partial<Entity>) => updateEntity(entitySlug, data),
       }
     },
-    [entities, hasUnsavedChanges, project, saveProject, entitySlug, updateEntity]
+    [entities, entitySlug, updateEntity]
   );
 
   if (!value.entity) {
-    const link = goToEntity({ project  })
+    const link = goToEntity({ project: rest.project }) 
     return (
       <div className="text-center p-28  rounded-lg bg-muted/20">
         <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -66,7 +57,7 @@ export function EntityProvider({ children, entitySlug }: EntityProviderProps) {
   }
 
   return (
-    <EntityContext.Provider value={value}>
+    <EntityContext.Provider value={{ ...value, ...rest }}>
       {children}
     </EntityContext.Provider>
   );

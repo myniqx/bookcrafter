@@ -16,8 +16,7 @@ interface ChapterStatisticsViewProps {
 export function ChapterStatisticsView({
   statistics,
 }: ChapterStatisticsViewProps) {
-  const { book, chapter, project } = useChapter()
-  const entities = project.entities
+  const { book, chapter, entities, project } = useChapter()
 
   if (!statistics) return null
 

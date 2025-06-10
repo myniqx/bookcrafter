@@ -69,9 +69,9 @@ export class ElectronFileAdapter implements StorageAdapter {
           try {
             const project = JSON.parse(projectData) as Project
             projects.push({
-              name: project.name,
-              slug: project.slug,
-              updatedAt: project.updatedAt,
+              name: project.metadata.name,
+              slug: project.metadata.slug,
+              updatedAt: project.metadata.updatedAt,
             } satisfies ProjectBase)
           } catch (error) {
             console.error(`Error parsing project ${projectId}:`, error)
@@ -124,7 +124,7 @@ export class ElectronFileAdapter implements StorageAdapter {
 
   async saveProject(project: Project): Promise<boolean> {
     try {
-      const projectPath = await this.getProjectPath(project.slug)
+      const projectPath = await this.getProjectPath(project.metadata.slug)
       await window.electronAPI!.fileSystem.ensureDir(projectPath)
 
       // Prepare project data (without base64 image data)
@@ -165,7 +165,7 @@ export class ElectronFileAdapter implements StorageAdapter {
 
       return true
     } catch (error) {
-      console.error(`Error saving project ${project.slug}:`, error)
+      console.error(`Error saving project ${project.metadata.slug}:`, error)
       return false
     }
   }

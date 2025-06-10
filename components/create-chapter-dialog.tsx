@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useLanguage } from "@/contexts/language-context"
-import { generateId, slugify } from "@/lib/utils"
+import { slugify } from "@/lib/utils"
 import { useBook } from "@/providers/book-provider"
 
 
@@ -31,7 +31,7 @@ export function CreateChapterDialog() {
   const [number, setNumber] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { addChapter, book, chapters } = useBook()
+  const { addChapter, chapters } = useBook()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

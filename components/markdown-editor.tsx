@@ -3,21 +3,18 @@
 import type React from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { Entity, Project } from "@/lib/types"
+import type { Entity } from "@/lib/types"
 
 import { Textarea } from "@/components/ui/textarea"
 
-import { AIPromptDropdown } from "./ai-prompt-dropdown"
 import { useChapter } from "@/providers/chapter-provider"
+import { Save } from "lucide-react"
+import { AIPromptDropdown } from "./ai-prompt-dropdown"
 import { EntityBadgesList } from "./entity-badges-list"
 import { Button } from "./ui/button"
-import { Save } from "lucide-react"
-import { useToast } from "./ui/use-toast"
-import { useLanguage } from "@/contexts/language-context"
 
 interface MarkdownEditorProps {
   content: string
-  project: Project
   currentChapter?: string
   onChange: (content: string) => void
   onProcessedContentChange: (processed: string) => void
@@ -28,9 +25,8 @@ export function MarkdownEditor({
   currentChapter,
   onChange,
   onProcessedContentChange,
-  project,
 }: MarkdownEditorProps) {
-  const { book, chapter, entities, saveProject, updateChapter, updateProject } = useChapter()
+  const { book, chapter, entities, saveProject, updateChapter } = useChapter()
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)
   const [entitySuggestions, setEntitySuggestions] = useState<Entity[]>([])
   const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ left: 0, top: 0 })
@@ -44,8 +40,8 @@ export function MarkdownEditor({
     updateChapter({ content })
 
     // Update entity references
-    const entityReferences = extractEntityReferences(content, project.entities)
-    const updatedEntities = project.entities.map((entity) => {
+    const entityReferences = extractEntityReferences(content, entities)
+    const updatedEntities = entities.map((entity) => {
       const references = entityReferences.filter((ref) => ref.entitySlug === entity.slug)
       if (references.length > 0) {
         const updatedUsages = [...(entity.usages || [])]
@@ -326,7 +322,6 @@ export function MarkdownEditor({
             currentChapter={currentChapter}
             currentContent={content}
             onTextReplace={handleTextReplace}
-            project={project}
             selectedText={selectedText}
           />
         </div>
@@ -343,7 +338,7 @@ export function MarkdownEditor({
         value={content}
       />
 
-      <EntityBadgesList entities={project.entities} />
+      <EntityBadgesList entities={entities} />
 
       {showEntitySuggestions && (
         <div

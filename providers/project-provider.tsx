@@ -79,7 +79,7 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
         ...projectMetadata,
         updatedAt: new Date().toISOString(),
       };
-      setProjectMetadata(updatedMetadata);s
+      setProjectMetadata(updatedMetadata);
       return updatedMetadata;
     }
     return null;
@@ -270,6 +270,9 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
 
   // Chapter Operations
   const addChapter = useCallback((chapter: Chapter) => {
+    if (!chapter.bookSlug)
+      throw new Error("Chapter must have a book slug");
+
     setChapters(prev => [...prev, chapter]);
     updateMetadataTimestamp();
     debouncedAutosave();
@@ -283,16 +286,17 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     return chapter;
   }, [updateMetadataTimestamp, debouncedAutosave, toast, t]);
 
-  const updateChapter = useCallback((chapterSlug: string, updatedChapter: Partial<Chapter>) => {
+  const updateChapter = useCallback((bookSlug: string, chapterSlug: string, updatedChapter: Partial<Chapter>) => {
     setChapters(prev => prev.map(chapter =>
-      chapter.slug === chapterSlug ? { ...chapter, ...updatedChapter } : chapter
+      chapter.slug === chapterSlug && chapter.bookSlug === bookSlug ? { ...chapter, ...updatedChapter } : chapter
     ));
     updateMetadataTimestamp();
     debouncedAutosave();
   }, [updateMetadataTimestamp, debouncedAutosave]);
 
-  const deleteChapter = useCallback((chapterSlug: string) => {
-    setChapters(prev => prev.filter(chapter => chapter.slug !== chapterSlug));
+  const deleteChapter = useCallback((bookSlug: string, chapterSlug: string) => {
+    setChapters(prev =>
+      prev.filter(chapter => chapter.slug !== chapterSlug && chapter.bookSlug !== bookSlug));
 
     // Clean chapter references from entities' usages
     setEntities(prev => prev.map(entity => ({
@@ -304,12 +308,12 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     debouncedAutosave();
   }, [updateMetadataTimestamp, debouncedAutosave]);
 
-  const getChapter = useCallback((chapterSlug: string) => {
-    return chapters.find(chapter => chapter.slug === chapterSlug) || null;
+  const getChapter = useCallback((bookSlug: string, chapterSlug: string) => {
+    return chapters.find(chapter => chapter.slug === chapterSlug && chapter.bookSlug === bookSlug) || null;
   }, [chapters]);
 
   const getChaptersForBook = useCallback((bookSlug: string) => {
-    return chapters.filter(chapter => chapter.bookSlug === bookSlug);
+    return chapters.filter(chapter => chapter.bookSlug === bookSlug) || [];
   }, [chapters]);
 
   // Entity Operations
@@ -335,7 +339,7 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     // Clean entity references from other entities' usages
     setEntities(prev => prev.map(entity => ({
       ...entity,
-      usages: entity.usages?.filter(usage => 
+      usages: entity.usages?.filter(usage =>
         !(usage.bookSlug && usage.chapterSlug) // Keep only valid usages
       ) || []
     })));
@@ -422,6 +426,11 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     return lastSaveTime !== projectMetadata?.updatedAt;
   }, [lastSaveTime, projectMetadata?.updatedAt]);
 
+  // Show loading state if project is not loaded
+  if (!projectMetadata) {
+    return <ProjectLoadingState error={error} onRetry={loadProject} />;
+  }
+
   // Context value
   const contextValue = {
     addBook,
@@ -446,7 +455,7 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     images,
     lastSaveTime,
     loading,
-    projectMetadata,
+    project: projectMetadata,
     saveProject,
     updateAISettings,
     updateBook,
@@ -455,11 +464,6 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     updateProjectImage,
     updateProjectMetadata,
   };
-
-  // Show loading state if project is not loaded
-  if (!projectMetadata) {
-    return <ProjectLoadingState error={error} onRetry={loadProject} />;
-  }
 
   return (
     <ProjectContext.Provider value={contextValue}>

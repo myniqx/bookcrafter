@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useLanguage } from "@/contexts/language-context"
 import { useProjects } from "@/hooks/use-projects"
 import { formatDate } from "@/lib/utils"
+import { goToProject } from "@/lib/utils/navigateTo"
 
 export function ProjectList() {
   const { t } = useLanguage()
@@ -38,7 +39,7 @@ export function ProjectList() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {projects.map((project) => (
-        <Link href={`/${project.slug}/project`} key={project.slug || project.name}>
+        <Link href={goToProject({ project })} key={project.slug || project.name}>
           <Card className="h-full cursor-pointer hover:bg-muted/20 transition-colors">
             <CardHeader>
               <CardTitle>{project.name || t("untitled_project")}</CardTitle>

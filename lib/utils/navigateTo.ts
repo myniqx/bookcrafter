@@ -1,9 +1,9 @@
 import { useRouter } from "next/navigation";
 
-import { Book, Chapter, Entity, Project } from "../types";
+import { Book, Chapter, Entity, ProjectMetadata } from "../types";
 
 interface GoToProjectProps {
-  project: Pick<Project, 'slug'>
+  project: Pick<ProjectMetadata, 'slug'>
   router?: ReturnType<typeof useRouter>
   params?: string
 }

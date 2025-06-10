@@ -8,13 +8,13 @@ import React, { createContext, useContext, useMemo } from "react";
 import { BookContextType, useBook } from "./book-provider";
 
 
-type ChapterContextType =
+interface ChapterContextType extends
   Omit<BookContextType,
     | "updateChapter"
-  > & {
-    chapter: Chapter
-    updateChapter: (data: Partial<Chapter>) => void;
-  }
+  > {
+  chapter: Chapter
+  updateChapter: (data: Partial<Chapter>) => void;
+}
 
 interface ChapterProviderProps {
   chapterSlug: string;
@@ -25,31 +25,26 @@ const ChapterContext = createContext<ChapterContextType | null>(null);
 
 export function ChapterProvider({ chapterSlug, children }: ChapterProviderProps) {
   const {
-    book,
     getChapter,
-    project,
     updateChapter,
     ...rest
   } = useBook();
 
   const value = useMemo(
-    (): ChapterContextType => {
+    () => {
       const chapter = getChapter(chapterSlug)!
 
       return {
-        book,
         chapter,
         getChapter,
-        project,
         updateChapter: (data: Partial<Chapter>) => updateChapter(chapterSlug, data),
-        ...rest
       }
     },
-    [getChapter, chapterSlug, book, project, rest, updateChapter]
+    [getChapter, chapterSlug, updateChapter]
   );
 
   if (!value.chapter) {
-    const link = goToChapter({ book, project })
+    const link = goToChapter({ book: rest.book, project: rest.project })
     return (
       <div className="text-center p-28  rounded-lg bg-muted/20">
         <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -65,7 +60,7 @@ export function ChapterProvider({ chapterSlug, children }: ChapterProviderProps)
   }
 
   return (
-    <ChapterContext.Provider value={value}>
+    <ChapterContext.Provider value={{ ...value, ...rest }}>
       {children}
     </ChapterContext.Provider>
   );

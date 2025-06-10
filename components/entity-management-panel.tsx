@@ -85,7 +85,7 @@ export function EntityManagementPanel() {
                 }).map(([value, Icon]) => (
                   <TabsTrigger key={value} value={value}>
                     <Icon className="h-4 w-4 mr-2" />
-                    {t(`${value}s`)}
+                    {t(`${value as EntityType}s`)}
                   </TabsTrigger>
                 ))}
             </TabsList>

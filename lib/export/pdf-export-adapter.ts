@@ -19,6 +19,7 @@ export class PDFExportAdapter extends BaseExportAdapter {
       const pageHeight = pdf.internal.pageSize.getHeight()
       const margins = options.margins || { bottom: 20, left: 20, right: 20, top: 20 }
       const contentWidth = pageWidth - margins.left - margins.right
+      const fontFamily = options.fontFamily || "Arial"
 
       let yPosition = margins.top
       let pageNumber = 1
@@ -57,8 +58,8 @@ export class PDFExportAdapter extends BaseExportAdapter {
       }
 
       // Add cover page if requested
-      if (options.includeCover && project.coverImageId) {
-        const coverImage = this.getImageById(project, project.coverImageId)
+      if (options.includeCover && project.metadata.coverImageId) {
+        const coverImage = this.getImageById(project, project.metadata.coverImageId)
         if (coverImage) {
           try {
             pdf.addImage(coverImage.data, "JPEG", 0, 0, pageWidth, pageHeight)
@@ -73,16 +74,16 @@ export class PDFExportAdapter extends BaseExportAdapter {
 
       // Add title page
       pdf.setFontSize(24)
-      pdf.setFont(undefined, "bold")
-      const titleLines = pdf.splitTextToSize(project.name, contentWidth)
+      pdf.setFont(fontFamily, "bold")
+      const titleLines = pdf.splitTextToSize(project.metadata.name, contentWidth)
       pdf.text(titleLines, margins.left, yPosition)
       yPosition += titleLines.length * 12
 
-      if (project.description) {
+      if (project.metadata.description) {
         yPosition += 10
         pdf.setFontSize(14)
-        pdf.setFont(undefined, "normal")
-        const descLines = pdf.splitTextToSize(project.description, contentWidth)
+        pdf.setFont(fontFamily, "normal")
+        const descLines = pdf.splitTextToSize(project.metadata.description, contentWidth)
         pdf.text(descLines, margins.left, yPosition)
         yPosition += descLines.length * 8
       }
@@ -92,19 +93,20 @@ export class PDFExportAdapter extends BaseExportAdapter {
         checkNewPage(50)
         yPosition += 20
         pdf.setFontSize(18)
-        pdf.setFont(undefined, "bold")
+        pdf.setFont(fontFamily, "bold")
         pdf.text("İçindekiler", margins.left, yPosition)
         yPosition += 15
 
         pdf.setFontSize(12)
-        pdf.setFont(undefined, "normal")
+        pdf.setFont(fontFamily, "normal")
 
         for (const book of project.books) {
           checkNewPage(10)
           pdf.text(book.title, margins.left, yPosition)
           yPosition += 8
 
-          for (const chapter of book.chapters) {
+          const chapters = project.chapters.filter((chapter) => chapter.bookSlug === book.slug)
+          for (const chapter of chapters) {
             checkNewPage(8)
             pdf.text(`  ${chapter.number || ""}. ${chapter.title}`, margins.left + 10, yPosition)
             yPosition += 6
@@ -127,7 +129,7 @@ export class PDFExportAdapter extends BaseExportAdapter {
 
         // Book title
         pdf.setFontSize(20)
-        pdf.setFont(undefined, "bold")
+        pdf.setFont(fontFamily, "bold")
         const bookTitleLines = pdf.splitTextToSize(book.title, contentWidth)
         pdf.text(bookTitleLines, margins.left, yPosition)
         yPosition += bookTitleLines.length * 10 + 15
@@ -135,14 +137,15 @@ export class PDFExportAdapter extends BaseExportAdapter {
         // Book description
         if (book.description) {
           pdf.setFontSize(12)
-          pdf.setFont(undefined, "italic")
+          pdf.setFont(fontFamily, "italic")
           const bookDescLines = pdf.splitTextToSize(book.description, contentWidth)
           pdf.text(bookDescLines, margins.left, yPosition)
           yPosition += bookDescLines.length * 6 + 10
         }
 
         // Chapters
-        for (const chapter of book.chapters) {
+        const chapters = project.chapters.filter((chapter) => chapter.bookSlug === book.slug)
+        for (const chapter of chapters) {
           // Start chapter on new page if requested
           if (options.chapterStartsOnRight && pageNumber % 2 === 0) {
             addPageNumber()
@@ -156,7 +159,7 @@ export class PDFExportAdapter extends BaseExportAdapter {
 
           // Chapter title
           pdf.setFontSize(16)
-          pdf.setFont(undefined, "bold")
+          pdf.setFont(fontFamily, "bold")
           const chapterTitle = `${chapter.number || ""}. ${chapter.title}`
           const chapterTitleLines = pdf.splitTextToSize(chapterTitle, contentWidth)
           pdf.text(chapterTitleLines, margins.left, yPosition)
@@ -165,7 +168,7 @@ export class PDFExportAdapter extends BaseExportAdapter {
           // Chapter content
           if (chapter.content) {
             pdf.setFontSize(options.fontSize || 11)
-            pdf.setFont(undefined, "normal")
+            pdf.setFont(fontFamily, "normal")
 
             const formattedContent = this.formatContent(chapter.content)
             const contentLines = pdf.splitTextToSize(formattedContent, contentWidth)

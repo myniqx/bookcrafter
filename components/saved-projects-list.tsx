@@ -29,7 +29,7 @@ export function SavedProjectsList() {
           if (projectsListJson) {
             const projectsList = JSON.parse(projectsListJson) as Project[]
             // Filter to show only autosaved projects
-            const autosavedProjects = (projectsList || []).filter((project) => project?.slug?.includes("-autosave"))
+            const autosavedProjects = (projectsList || []).filter((project) => project?.metadata.slug?.includes("-autosave"))
             setSavedProjects(autosavedProjects)
           } else {
             setSavedProjects([])
@@ -67,11 +67,11 @@ export function SavedProjectsList() {
 
       if (projectsListJson) {
         const projectsList = JSON.parse(projectsListJson) as Project[]
-        const updatedList = (projectsList || []).filter((p) => p?.slug !== slug)
+        const updatedList = (projectsList || []).filter((p) => p?.metadata.slug !== slug)
         localStorage.setItem(projectsListKey, JSON.stringify(updatedList))
 
         // Update state
-        setSavedProjects((prevProjects) => (prevProjects || []).filter((p) => p?.slug !== slug))
+        setSavedProjects((prevProjects) => (prevProjects || []).filter((p) => p?.metadata.slug !== slug))
       }
     } catch (error) {
       console.error("Error updating projects list:", error)
@@ -98,7 +98,7 @@ export function SavedProjectsList() {
 
   return (
     <div className="space-y-4">
-      {savedProjects.map((project) => {
+      {savedProjects.map(({ books, entities, metadata: project }) => {
         if (!project || !project.slug) return null
 
         // Extract original project name (remove -autosave suffix)
@@ -118,11 +118,11 @@ export function SavedProjectsList() {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">{t("book_count")}:</span>
-                  <span className="text-sm font-medium">{project.books?.length || 0}</span>
+                  <span className="text-sm font-medium">{books?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">{t("entity_count")}:</span>
-                  <span className="text-sm font-medium">{project.entities?.length || 0}</span>
+                  <span className="text-sm font-medium">{entities?.length || 0}</span>
                 </div>
               </div>
             </CardContent>

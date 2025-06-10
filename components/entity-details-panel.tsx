@@ -8,13 +8,16 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { goToChapter } from "@/lib/utils/navigateTo"
+import { useProject } from "@/providers/project-provider"
 
 interface EntityDetailsPanelProps {
   entity: Entity | null
   projectId: string
 }
 
-export function EntityDetailsPanel({ entity, projectId }: EntityDetailsPanelProps) {
+export function EntityDetailsPanel({ entity }: EntityDetailsPanelProps) {
+  const { project } = useProject()
+
   if (!entity) {
     return (
       <Card className="h-full">

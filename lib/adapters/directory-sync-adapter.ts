@@ -8,7 +8,7 @@ export class DirectorySyncAdapter implements StorageAdapter {
 
   async saveProject(project: Project): Promise<boolean> {
     // Update cache
-    this.projectsCache.set(project.slug, project)
+    this.projectsCache.set(project.metadata.slug, project)
 
     if (typeof window === "undefined" || !("showDirectoryPicker" in window)) {
       throw new Error("Directory API desteklenmiyor")
@@ -17,13 +17,13 @@ export class DirectorySyncAdapter implements StorageAdapter {
     try {
       // Request directory access if not already granted
       if (!this.directoryHandle) {
-        this.directoryHandle = await (window as any).showDirectoryPicker({
+        this.directoryHandle = await (window as { showDirectoryPicker: (options: { mode: "readwrite" }) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({
           mode: "readwrite",
         })
       }
 
       // Create project folder
-      const projectFolderName = `${project.slug}`
+      const projectFolderName = `${project.metadata.slug}`
       const projectFolder = await this.directoryHandle!.getDirectoryHandle(projectFolderName, { create: true })
 
       // Save project data
@@ -70,9 +70,9 @@ export class DirectorySyncAdapter implements StorageAdapter {
 
   async getProjects(): Promise<ProjectBase[]> {
     return Array.from(this.projectsCache.values()).map((project) => ({
-      name: project.name,
-      slug: project.slug,
-      updatedAt: project.updatedAt,
+      name: project.metadata.name,
+      slug: project.metadata.slug,
+      updatedAt: project.metadata.updatedAt,
     }))
   }
 
@@ -88,17 +88,18 @@ export class DirectorySyncAdapter implements StorageAdapter {
 
     try {
       // Request directory access
-      const directoryHandle = await (window as any).showDirectoryPicker({
+      const directoryHandle = await (window as { showDirectoryPicker: (options: { mode: "read" }) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({
         mode: "read",
       })
 
       // Find project folder
-      let projectFolder: FileSystemDirectoryHandle | null = null
-      for await (const [name, handle] of directoryHandle.entries()) {
-        if (handle.kind === "directory" && name === slug) {
-          projectFolder = handle
-          break
-        }
+      let projectFolder: FileSystemDirectoryHandle | null = null;
+
+      try {
+        projectFolder = await directoryHandle.getDirectoryHandle(slug);
+      } catch (error) {
+        // If the directory doesn't exist, getDirectoryHandle will throw
+        console.error("Error finding project folder:", error);
       }
 
       if (!projectFolder) {

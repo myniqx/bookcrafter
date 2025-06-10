@@ -1,20 +1,15 @@
 "use client"
-
 import { useEffect, useState } from "react"
-
-
 import type { Entity } from "@/lib/types"
-
 import { BookHeader } from "@/components/book-header"
 import { ChapterList } from "@/components/chapter-list"
-import { CreateChapterDialog } from "@/components/create-chapter-dialog"
 import { EntityBadgesList } from "@/components/entity-badges-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
 import { useBook } from "@/providers/book-provider"
 
 export default function BookPage() {
-  const { book, chapters, entities, project } = useBook()
+  const { chapters, entities } = useBook()
   const [usedEntities, setUsedEntities] = useState<Entity[]>([])
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({})
   const { t } = useLanguage()
@@ -65,7 +60,7 @@ export default function BookPage() {
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium mb-2">{t("chapter_count")}</h3>
-                  <div className="text-2xl font-bold">{book.chapters.length}</div>
+                  <div className="text-2xl font-bold">{chapters.length}</div>
                 </div>
 
                 <div>

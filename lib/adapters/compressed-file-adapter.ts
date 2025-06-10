@@ -11,7 +11,7 @@ export class CompressedFileAdapter implements StorageAdapter {
 
   async saveProject(project: Project): Promise<boolean> {
     // Update cache
-    this.projectsCache.set(project.slug, project)
+    this.projectsCache.set(project.metadata.slug, project)
 
     // Create a compressed file with project data and images
     if (typeof window !== "undefined") {
@@ -52,7 +52,7 @@ export class CompressedFileAdapter implements StorageAdapter {
 
         const a = document.createElement("a")
         a.href = url
-        a.download = `${project.slug}.bookcraft`
+        a.download = `${project.metadata.slug}.bookcraft`
         document.body.appendChild(a)
         a.click()
 
@@ -106,7 +106,7 @@ export class CompressedFileAdapter implements StorageAdapter {
             const project = JSON.parse(projectJson) as Project
 
             // Validate project ID
-            if (project.slug !== slug) {
+            if (project.metadata.slug !== slug) {
               alert("Yüklenen dosya istenen proje ile eşleşmiyor.")
               resolve(null)
               return
@@ -154,9 +154,9 @@ export class CompressedFileAdapter implements StorageAdapter {
 
   async getProjects(): Promise<ProjectBase[]> {
     return Array.from(this.projectsCache.values()).map((project) => ({
-      name: project.name,
-      slug: project.slug,
-      updatedAt: project.updatedAt,
+      name: project.metadata.name,
+      slug: project.metadata.slug,
+      updatedAt: project.metadata.updatedAt,
     }))
   }
 

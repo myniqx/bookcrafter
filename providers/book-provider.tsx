@@ -1,10 +1,11 @@
 "use client"
 import { Button } from "@/components/ui/button";
-import { Book, Chapter } from "@/lib/types";
+import { Book, Chapter, ProjectContextType } from "@/lib/types";
 import { BookOpen, StepBack } from "lucide-react";
 import Link from "next/link";
 import { createContext, useContext, useMemo } from "react";
-import { ProjectContextType, useProject } from "./project-provider";
+import { useProject } from "./project-provider";
+import { goToBook } from "@/lib/utils/navigateTo";
 
 
 
@@ -13,6 +14,7 @@ export type BookContextType =
     | 'updateBook'
     | 'getChapter'
     | 'addChapter'
+    | 'chapters'
   >
   & {
     book: Book
@@ -33,32 +35,30 @@ const BookContext = createContext<BookContextType | null>(null);
 export function BookProvider({ bookSlug, children }: BookProviderProps) {
   const {
     addChapter,
+    chapters: allChapters,
     getBook,
     getChapter,
-    project,
     updateBook,
     updateChapter,
     ...rest
   } = useProject();
 
   const value = useMemo(
-    (): BookContextType => {
+    () => {
       const book = getBook(bookSlug)!;
-      const chapters = book.chapters || []
+      const chapters = allChapters.filter((chapter) => chapter.bookSlug === bookSlug) || [];
 
       return {
-        addChapter: (chapter: Chapter) => addChapter(bookSlug, chapter),
+        addChapter: (chapter: Chapter) => addChapter({ ...chapter, bookSlug }),
         book,
         chapters,
         getBook,
         getChapter: (chapterSlug: string) => getChapter(bookSlug, chapterSlug),
-        project,
         updateBook: (data: Partial<Book>) => updateBook(bookSlug, data),
         updateChapter: (chapterSlug: string, data: Partial<Chapter>) => updateChapter(bookSlug, chapterSlug, data),
-        ...rest
       }
     },
-    [getBook, bookSlug, project, rest, addChapter, getChapter, updateBook, updateChapter]
+    [getBook, bookSlug, allChapters, addChapter, getChapter, updateBook, updateChapter]
   );
 
   if (!value.book) {
@@ -66,7 +66,7 @@ export function BookProvider({ bookSlug, children }: BookProviderProps) {
       <div className="text-center p-28  rounded-lg bg-muted/20">
         <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
         <p className="text-muted-foreground mb-4">Book not found</p>
-        <Link href={`/${project.slug}/book`}>
+        <Link href={goToBook({ project: rest.project })}>
           <Button>
             <StepBack className="mr-2 h-4 w-4" />
             Back
@@ -77,7 +77,7 @@ export function BookProvider({ bookSlug, children }: BookProviderProps) {
   }
 
   return (
-    <BookContext.Provider value={value}>
+    <BookContext.Provider value={{ ...value, ...rest }}>
       {children}
     </BookContext.Provider>
   );

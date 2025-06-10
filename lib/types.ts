@@ -211,7 +211,7 @@ export interface OllamaModel {
 
 
 export interface ProjectContextType {
-  projectMetadata: ProjectMetadata | null;
+  project: ProjectMetadata;
   books: Book[];
   chapters: Chapter[];
   entities: Entity[];
@@ -234,9 +234,9 @@ export interface ProjectContextType {
 
   // Chapter operations
   addChapter: (chapter: Chapter) => Chapter;
-  updateChapter: (chapterSlug: string, updatedChapter: Partial<Chapter>) => void;
-  deleteChapter: (chapterSlug: string) => void;
-  getChapter: (chapterSlug: string) => Chapter | null;
+  updateChapter: (bookSlug: string, chapterSlug: string, updatedChapter: Partial<Chapter>) => void;
+  deleteChapter: (bookSlug: string, chapterSlug: string) => void;
+  getChapter: (bookSlug: string, chapterSlug: string) => Chapter | null;
   getChaptersForBook: (bookSlug: string) => Chapter[];
 
   // Entity operations

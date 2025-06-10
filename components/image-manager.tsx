@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { generateId } from "@/lib/utils"
+import Image from "next/image"
 
 interface ImageManagerProps {
   images: ProjectImage[]
@@ -186,7 +187,7 @@ export function ImageManager({
                   className="w-full"
                   onClick={() => onSetCoverImage(image.id)}
                   size="sm"
-                  variant={coverImageId === image.id ? "default" : "outline-solid"}
+                  variant={coverImageId === image.id ? "default" : "outline"}
                 >
                   {coverImageId === image.id ? "Kapak Resmi" : "Kapak Yap"}
                 </Button>
@@ -196,7 +197,7 @@ export function ImageManager({
                   className="w-full"
                   onClick={() => onSetBackgroundImage(image.id)}
                   size="sm"
-                  variant={backgroundImageId === image.id ? "default" : "outline-solid"}
+                  variant={backgroundImageId === image.id ? "default" : "outline"}
                 >
                   {backgroundImageId === image.id ? "Arka Plan" : "Arka Plan Yap"}
                 </Button>
@@ -289,7 +290,7 @@ export function ImageManager({
           </DialogHeader>
           {previewImage && (
             <div className="max-h-[70vh] overflow-auto">
-              <img alt={previewImage.name} className="w-full h-auto" src={previewImage.data || "/placeholder.svg"} />
+              <Image alt={previewImage.name} className="w-full h-auto" src={previewImage.data || "/placeholder.svg"} />
             </div>
           )}
         </DialogContent>
