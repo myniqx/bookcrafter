@@ -4,7 +4,7 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Language = "tr" | "en"
+export type Language = "tr" | "en"
 
 interface LanguageContextType {
   language: Language
