@@ -10,6 +10,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { AIPromptDropdown } from "./ai-prompt-dropdown"
 import { useChapter } from "@/providers/chapter-provider"
 import { EntityBadgesList } from "./entity-badges-list"
+import { Button } from "./ui/button"
+import { Save } from "lucide-react"
+import { useToast } from "./ui/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 
 interface MarkdownEditorProps {
   content: string
@@ -26,7 +30,7 @@ export function MarkdownEditor({
   onProcessedContentChange,
   project,
 }: MarkdownEditorProps) {
-  const { book, chapter, entities } = useChapter()
+  const { book, chapter, entities, saveProject, updateChapter, updateProject } = useChapter()
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)
   const [entitySuggestions, setEntitySuggestions] = useState<Entity[]>([])
   const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ left: 0, top: 0 })
@@ -35,6 +39,61 @@ export function MarkdownEditor({
   const [selectedText, setSelectedText] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+
+  const handleSave = () => {
+    updateChapter({ content })
+
+    // Update entity references
+    const entityReferences = extractEntityReferences(content, project.entities)
+    const updatedEntities = project.entities.map((entity) => {
+      const references = entityReferences.filter((ref) => ref.entitySlug === entity.slug)
+      if (references.length > 0) {
+        const updatedUsages = [...(entity.usages || [])]
+
+        // Check if this chapter is already in usages
+        const existingUsageIndex = updatedUsages.findIndex(
+          (usage) => usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug,
+        )
+
+        if (existingUsageIndex >= 0) {
+          // Update existing usage
+          updatedUsages[existingUsageIndex] = {
+            bookSlug: book.slug,
+            chapterSlug: chapter.slug,
+            count: references.length,
+          }
+        } else {
+          // Add new usage
+          updatedUsages.push({
+            bookSlug: book.slug,
+            chapterSlug: chapter.slug,
+            count: references.length,
+          })
+        }
+
+        return {
+          ...entity,
+          usages: updatedUsages,
+        }
+      } else {
+        // Remove this chapter from usages if it exists
+        const updatedUsages = (entity.usages || []).filter(
+          (usage) => !(usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug),
+        )
+
+        return {
+          ...entity,
+          usages: updatedUsages,
+        }
+      }
+    })
+
+    updateProject({
+      entities: updatedEntities,
+    })
+
+    saveProject()
+  }
 
   // Process content to replace entity references and apply markdown
   useEffect(() => {
@@ -259,13 +318,18 @@ export function MarkdownEditor({
     <div className="relative">
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm text-muted-foreground">Markdown Editor</div>
-        <AIPromptDropdown
-          currentChapter={currentChapter}
-          currentContent={content}
-          onTextReplace={handleTextReplace}
-          project={project}
-          selectedText={selectedText}
-        />
+        <div className="flex flex-row gap-2">
+          <Button onClick={handleSave} size="icon" title="Projeyi Kaydet" variant={"outline"}>
+            <Save className=" h-4 w-4" />
+          </Button>
+          <AIPromptDropdown
+            currentChapter={currentChapter}
+            currentContent={content}
+            onTextReplace={handleTextReplace}
+            project={project}
+            selectedText={selectedText}
+          />
+        </div>
       </div>
 
       <Textarea
@@ -292,9 +356,8 @@ export function MarkdownEditor({
         >
           {entitySuggestions.map((entity, index) => (
             <div
-              className={`p-2 cursor-pointer flex items-center gap-2 ${
-                index === selectedIndex ? "bg-primary/10" : "hover:bg-muted"
-              }`}
+              className={`p-2 cursor-pointer flex items-center gap-2 ${index === selectedIndex ? "bg-primary/10" : "hover:bg-muted"
+                }`}
               key={entity.slug}
               onClick={() => handleEntitySelect(entity)}
             >
@@ -309,4 +372,25 @@ export function MarkdownEditor({
       )}
     </div>
   )
+}
+
+
+// Helper function to extract entity references from content
+function extractEntityReferences(content: string, entities: Entity[]) {
+  const references: { entitySlug: string; property?: string }[] = []
+
+  entities.forEach((entity) => {
+    // Match @slug or @slug.property
+    const regex = new RegExp(`@${entity.slug}(?:\\.(\\w+))?`, "g")
+    let match
+
+    while ((match = regex.exec(content)) !== null) {
+      references.push({
+        entitySlug: entity.slug,
+        property: match[1],
+      })
+    }
+  })
+
+  return references
 }

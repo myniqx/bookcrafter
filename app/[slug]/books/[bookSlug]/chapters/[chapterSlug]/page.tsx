@@ -1,34 +1,27 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { ChapterHeader } from "@/components/chapter-header"
 import { ChapterStatisticsView } from "@/components/chapter-statistics-view"
 import { EntityManagementPanel } from "@/components/entity-management-panel"
 import { MarkdownEditor } from "@/components/markdown-editor"
 import { MarkdownPreview } from "@/components/markdown-preview"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useLanguage } from "@/contexts/language-context"
-import { useToast } from "@/hooks/use-toast"
 import { ChapterStatistics, Entity } from "@/lib/types"
 import { useChapter } from "@/providers/chapter-provider"
-import { useProject } from "@/providers/project-provider"
-import { debounce } from "lodash"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 
 export default function ChapterPage() {
-  const { book, chapter, project, updateChapter } = useChapter()
-  const { saveProject, updateProject } = useProject()
+  const { chapter, project } = useChapter()
 
   const [content, setContent] = useState("")
   const [originalContent, setOriginalContent] = useState("")
   const [activeTab, setActiveTab] = useState("preview")
   const [statistics, setStatistics] = useState<ChapterStatistics | null>(null)
   const [processedContent, setProcessedContent] = useState("")
-  const { toast } = useToast()
-  const { t } = useLanguage()
+
 
 
   // Load chapter content
@@ -38,83 +31,17 @@ export default function ChapterPage() {
     setContent(chapter.content || "")
     setOriginalContent(chapter.content || "")
     calculateStatistics(chapter.content || "", project.entities)
-  }, [chapter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter?.slug])
 
   const handleProcessedContentChange = (processed: string) => {
     setProcessedContent(processed)
   }
 
-  const handleSave = (content: string) => {
-    updateChapter({ content })
-
-    // Update entity references
-    const entityReferences = extractEntityReferences(content, project.entities)
-    const updatedEntities = project.entities.map((entity) => {
-      const references = entityReferences.filter((ref) => ref.entitySlug === entity.slug)
-      if (references.length > 0) {
-        const updatedUsages = [...(entity.usages || [])]
-
-        // Check if this chapter is already in usages
-        const existingUsageIndex = updatedUsages.findIndex(
-          (usage) => usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug,
-        )
-
-        if (existingUsageIndex >= 0) {
-          // Update existing usage
-          updatedUsages[existingUsageIndex] = {
-            bookSlug: book.slug,
-            chapterSlug: chapter.slug,
-            count: references.length,
-          }
-        } else {
-          // Add new usage
-          updatedUsages.push({
-            bookSlug: book.slug,
-            chapterSlug: chapter.slug,
-            count: references.length,
-          })
-        }
-
-        return {
-          ...entity,
-          usages: updatedUsages,
-        }
-      } else {
-        // Remove this chapter from usages if it exists
-        const updatedUsages = (entity.usages || []).filter(
-          (usage) => !(usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug),
-        )
-
-        return {
-          ...entity,
-          usages: updatedUsages,
-        }
-      }
-    })
-
-    updateProject({
-      ...project,
-      entities: updatedEntities,
-    })
-
-    saveProject()
-    setOriginalContent(content)
-
-    toast({
-      description: t("changes_saved"),
-      title: t("chapter_saved"),
-      variant: "success",
-    })
-
-  }
-
-  const handleSaveDebounced = debounce(handleSave, 1000)
-
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent)
     calculateStatistics(newContent, project.entities)
-    handleSaveDebounced()
   }
 
   const calculateStatistics = (text: string, entities: Entity[]) => {
@@ -150,49 +77,6 @@ export default function ChapterPage() {
       wordCount,
     })
   }
-
-  const handleCompleteNote = (entityId: string, noteId: string, completed: boolean) => {
-
-    const updatedEntities = project.entities.map((entity) => {
-      if (entity.slug === entityId && entity.notes) {
-        const updatedNotes = entity.notes.map((note) => {
-          if (note.id === noteId) {
-            return {
-              ...note,
-              completed,
-              completedIn: completed
-                ? {
-                  bookId: book.slug,
-                  chapterId: chapter.slug,
-                }
-                : undefined,
-            }
-          }
-          return note
-        })
-
-        return {
-          ...entity,
-          notes: updatedNotes,
-        }
-      }
-      return entity
-    })
-
-    const updatedProject = {
-      ...project,
-      entities: updatedEntities,
-    }
-
-    saveProject(updatedProject)
-
-    toast({
-      description: completed ? t("note_completed_description") : t("note_uncompleted_description"),
-      title: completed ? t("note_completed") : t("note_uncompleted"),
-      variant: "success",
-    })
-  }
-
 
 
   return (
@@ -235,10 +119,7 @@ export default function ChapterPage() {
 
               <TabsContent className="flex-1 overflow-hidden" value="entities">
                 <ScrollArea className="h-full">
-                  <EntityManagementPanel
-                    bookId={book.slug}
-                    chapterId={chapter.slug}
-                    onCompleteNote={handleCompleteNote} />
+                  <EntityManagementPanel />
                 </ScrollArea>
               </TabsContent>
 
@@ -260,22 +141,3 @@ export default function ChapterPage() {
 }
 
 
-// Helper function to extract entity references from content
-function extractEntityReferences(content: string, entities: Entity[]) {
-  const references: { entitySlug: string; property?: string }[] = []
-
-  entities.forEach((entity) => {
-    // Match @slug or @slug.property
-    const regex = new RegExp(`@${entity.slug}(?:\\.(\\w+))?`, "g")
-    let match
-
-    while ((match = regex.exec(content)) !== null) {
-      references.push({
-        entitySlug: entity.slug,
-        property: match[1],
-      })
-    }
-  })
-
-  return references
-}

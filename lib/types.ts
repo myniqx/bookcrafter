@@ -18,18 +18,23 @@ export interface ProjectBase {
   updatedAt: string
 }
 
-export interface Project extends ProjectBase {
+// Project metadata interface for provider state management
+export interface ProjectMetadata extends ProjectBase {
   description?: string
   createdAt: string
   adapterType: AdapterType
-  books: Book[]
-  entities: Entity[]
-  images: ProjectImage[]
   coverImageId?: string
   backgroundImageId?: string
-  aiSettings?: AISettings
 }
 
+export interface Project {
+  metadata: ProjectMetadata
+  books: Book[]
+  chapters: Chapter[]
+  entities: Entity[]
+  images: ProjectImage[]
+  aiSettings?: AISettings
+}
 
 export interface Book {
   slug: string
@@ -37,11 +42,11 @@ export interface Book {
   description?: string
   createdAt: string
   updatedAt: string
-  chapters: Chapter[]
   coverImageId?: string
   status?: "draft" | "completed"
 }
 
+// Chapter interface with belongToBookSlug for flattened structure
 export interface Chapter {
   slug: string
   title: string
@@ -51,6 +56,7 @@ export interface Chapter {
   createdAt: string
   updatedAt: string
   imageIds?: string[]
+  bookSlug?: string 
 }
 
 export type EntityType = "character" | "location" | "item" | "event"
@@ -201,4 +207,50 @@ export interface OllamaModel {
     quantization_level: string
   }
   modified_at: string
+}
+
+
+export interface ProjectContextType {
+  projectMetadata: ProjectMetadata | null;
+  books: Book[];
+  chapters: Chapter[];
+  entities: Entity[];
+  images: ProjectImage[];
+  aiSettings: AISettings | undefined;
+  loading: boolean;
+  error: string | null;
+  hasUnsavedChanges: boolean;
+  lastSaveTime: string | null;
+
+  // CRUD Operations
+  saveProject: () => Promise<boolean>;
+  updateProjectMetadata: (updatedMetadata: Partial<ProjectMetadata>) => void;
+
+  // Book operations
+  addBook: (book: Book) => Book;
+  updateBook: (bookSlug: string, updatedBook: Partial<Book>) => void;
+  deleteBook: (bookSlug: string) => void;
+  getBook: (bookSlug: string) => Book | null;
+
+  // Chapter operations
+  addChapter: (chapter: Chapter) => Chapter;
+  updateChapter: (chapterSlug: string, updatedChapter: Partial<Chapter>) => void;
+  deleteChapter: (chapterSlug: string) => void;
+  getChapter: (chapterSlug: string) => Chapter | null;
+  getChaptersForBook: (bookSlug: string) => Chapter[];
+
+  // Entity operations
+  addEntity: (entity: Entity) => Entity | undefined;
+  updateEntity: (entitySlug: string, updatedEntity: Partial<Entity>) => void;
+  deleteEntity: (entitySlug: string) => void;
+  getEntity: (entitySlug: string) => Entity | null;
+
+  // Image operations
+  addProjectImage: (image: ProjectImage) => ProjectImage | undefined;
+  updateProjectImage: (imageId: string, updatedImage: Partial<ProjectImage>) => void;
+  deleteProjectImage: (imageId: string) => void;
+  getProjectImage: (imageId: string) => ProjectImage | null;
+
+  // AI Settings operations
+  updateAISettings: (settings: AISettings) => void;
 }

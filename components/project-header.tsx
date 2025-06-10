@@ -10,15 +10,15 @@ import { EditableText } from "./editable-text"
 
 
 export function ProjectHeader() {
-  const { hasUnsavedChanges, project, saveProject, updateProject } = useProject()
+  const { hasUnsavedChanges, project, updateProject } = useProject()
 
   if (!project) return null
   const onNameChange = (name: string) => {
-    updateProject({ ...project, name })
+    updateProject({ name })
   }
 
   const onDescriptionChange = (description: string) => {
-    updateProject({ ...project, description })
+    updateProject({ description })
   }
 
   return (

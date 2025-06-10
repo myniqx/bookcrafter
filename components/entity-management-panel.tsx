@@ -12,34 +12,26 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { CreateEntityForm } from "./create-entity-form"
 import { useLanguage } from "@/contexts/language-context"
+import { useChapter } from "@/providers/chapter-provider"
 import { useProject } from "@/providers/project-provider"
+import { CreateEntityForm } from "./create-entity-form"
 
-interface EntityManagementPanelProps {
-  onCompleteNote: (entityId: string, noteId: string, completed: boolean) => void
-  bookId: string
-  chapterId: string
-}
 
-export function EntityManagementPanel({
-  bookId,
-  chapterId,
-  onCompleteNote
-}: EntityManagementPanelProps) {
+export function EntityManagementPanel() {
   const [activeTab, setActiveTab] = useState<EntityType>("character")
+  const { entities } = useChapter()
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
   const { t } = useLanguage()
-  const { project } = useProject()
 
-  const filteredEntities = project.entities
-    .filter((entity) => entity.type === activeTab)
+  const filteredEntities = entities
+    ?.filter((entity) => entity.type === activeTab)
     .filter(
       (entity) =>
         entity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         entity.slug.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+  ) || []
 
   return (
     <div className="space-y-4 h-full overflow-auto">
@@ -107,11 +99,8 @@ export function EntityManagementPanel({
                 ) : (
                   filteredEntities.map((entity) => (
                     <EntityCard
-                      bookId={bookId}
-                      chapterId={chapterId}
                       entity={entity}
                       key={entity.slug}
-                      onCompleteNote={onCompleteNote}
                     />
                   ))
                 )}
@@ -126,18 +115,16 @@ export function EntityManagementPanel({
 
 interface EntityCardProps {
   entity: Entity
-  onCompleteNote: (entityId: string, noteId: string, completed: boolean) => void
-  bookId: string
-  chapterId: string
 }
 
-function EntityCard({ bookId, chapterId, entity, onCompleteNote }: EntityCardProps) {
+function EntityCard({ entity }: EntityCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const { book, chapter } = useChapter()
 
   // Filter notes that are not completed or completed in this chapter
   const relevantNotes =
     entity.notes?.filter(
-      (note) => !note.completed || (note.completedIn?.bookId === bookId && note.completedIn?.chapterId === chapterId),
+      (note) => !note.completed || (note.completedIn?.bookId === book.slug && note.completedIn?.chapterId === chapter.slug),
     ) || []
 
   return (
@@ -158,12 +145,11 @@ function EntityCard({ bookId, chapterId, entity, onCompleteNote }: EntityCardPro
               <h4 className="text-sm font-medium">Notlar:</h4>
               {relevantNotes.map((note) => (
                 <NoteItem
-                  bookId={bookId}
-                  chapterId={chapterId}
-                  entityId={entity.slug}
+                  bookId={book.slug}
+                  chapterId={chapter.slug}
+                  entity={entity}
                   key={note.id}
                   note={note}
-                  onComplete={onCompleteNote}
                 />
               ))}
             </div>
@@ -178,15 +164,34 @@ function EntityCard({ bookId, chapterId, entity, onCompleteNote }: EntityCardPro
 
 interface NoteItemProps {
   note: Note
-  entityId: string
-  onComplete: (entityId: string, noteId: string, completed: boolean) => void
+  entity: Entity
   bookId: string
   chapterId: string
 }
 
-function NoteItem({ bookId, chapterId, entityId, note, onComplete }: NoteItemProps) {
+function NoteItem({ bookId, chapterId, entity, note }: NoteItemProps) {
+  const { updateEntity } = useProject()
   const isCompletedHere =
-    note.completed && note.completedIn?.bookId === bookId && note.completedIn?.chapterId === chapterId
+    note.completed &&
+    note.completedIn?.bookId === bookId &&
+    note.completedIn?.chapterId === chapterId
+
+  const onComplete = (completed: boolean) => {
+    updateEntity(entity.slug, {
+      ...entity,
+      notes: entity.notes?.map((n) =>
+        n.id === note.id
+          ? {
+            ...n,
+            completed,
+            completedIn: completed
+              ? { bookId, chapterId }
+              : undefined,
+          }
+          : n
+      ),
+    })
+  }
 
   return (
     <div className="flex items-start gap-2 p-2 border rounded-md bg-muted/10 hover:bg-muted/20 transition-colors">
@@ -194,7 +199,7 @@ function NoteItem({ bookId, chapterId, entityId, note, onComplete }: NoteItemPro
         checked={isCompletedHere}
         id={`note-${note.id}`}
         onCheckedChange={(checked) => {
-          onComplete(entityId, note.id, checked === true)
+          onComplete(checked === true)
         }}
       />
       <div className="flex-1">

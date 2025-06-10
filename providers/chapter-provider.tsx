@@ -1,22 +1,20 @@
 "use client"
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { Book, Chapter, Entity, Project } from "@/lib/types";
+import { Chapter } from "@/lib/types";
 import { goToChapter } from "@/lib/utils/navigateTo";
 import { BookOpen, StepBack } from "lucide-react";
 import Link from "next/link";
-import { createContext, useContext, useMemo } from "react";
-import { useBook } from "./book-provider";
+import React, { createContext, useContext, useMemo } from "react";
+import { BookContextType, useBook } from "./book-provider";
 
 
-interface ChapterContextType {
-  project: Project
-  book: Book
-  chapter: Chapter
-  entities: Entity[] | undefined
-  updateChapter: (data: Partial<Chapter>) => void;
-  hasUnsavedChanges: boolean;
-}
+type ChapterContextType =
+  Omit<BookContextType,
+    | "updateChapter"
+  > & {
+    chapter: Chapter
+    updateChapter: (data: Partial<Chapter>) => void;
+  }
 
 interface ChapterProviderProps {
   chapterSlug: string;
@@ -29,33 +27,29 @@ export function ChapterProvider({ chapterSlug, children }: ChapterProviderProps)
   const {
     book,
     getChapter,
-    hasUnsavedChanges,
     project,
-    updateChapter
+    updateChapter,
+    ...rest
   } = useBook();
 
   const value = useMemo(
-    () => {
+    (): ChapterContextType => {
       const chapter = getChapter(chapterSlug)!
-
-      const entities = project.entities && project.entities.length > 0
-        ? project.entities
-        : undefined
 
       return {
         book,
         chapter,
-        entities,
-        hasUnsavedChanges,
+        getChapter,
         project,
-        updateChapter: (data: Partial<Chapter>) => updateChapter(chapterSlug, data)
+        updateChapter: (data: Partial<Chapter>) => updateChapter(chapterSlug, data),
+        ...rest
       }
     },
-    [getChapter, chapterSlug, project, book, hasUnsavedChanges, updateChapter]
+    [getChapter, chapterSlug, book, project, rest, updateChapter]
   );
 
   if (!value.chapter) {
-    const link = goToChapter({  book, project })
+    const link = goToChapter({ book, project })
     return (
       <div className="text-center p-28  rounded-lg bg-muted/20">
         <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />

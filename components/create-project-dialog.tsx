@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { useProjects } from "@/hooks/use-projects"
-import { generateId, slugify } from "@/lib/utils"
+import { slugify } from "@/lib/utils"
 import { goToProject } from "@/lib/utils/navigateTo"
 
 interface CreateProjectDialogProps {
@@ -54,17 +54,19 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
       const now = new Date().toISOString()
       const slug = slugify(trimmedName)
 
-
       await createProject({
-        adapterType,
         books: [],
-        createdAt: now,
-        description: description.trim() || undefined,
+        chapters: [],
         entities: [],
         images: [],
-        name: trimmedName,
-        slug,
-        updatedAt: now
+        metadata: {
+          adapterType,
+          createdAt: now,
+          description: description.trim() || undefined,
+          name: trimmedName,
+          slug,
+          updatedAt: now
+        }
       })
 
       onOpenChange(false)

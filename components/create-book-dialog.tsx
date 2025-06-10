@@ -46,7 +46,7 @@ export function CreateBookDialog() {
 
     const slug = slugify(trimmedTitle)
 
-    if (project?.books.some((book) => book.slug === slug)) {
+    if (project.books.some((book) => book.slug === slug)) {
       setError("Bu kitap zaten mevcut.")
       return
     }
@@ -67,8 +67,7 @@ export function CreateBookDialog() {
       }
 
       updateProject({
-        ...project,
-        books: [...project?.books, newBook],
+        books: [...project.books, newBook],
       })
 
       // Reset form

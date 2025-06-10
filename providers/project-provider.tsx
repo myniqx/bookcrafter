@@ -1,72 +1,133 @@
 "use client";
 
+import { ProjectLoadingState } from "@/components/project-loading-state";
+import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/language-context";
+import { useAutosave } from "@/hooks/use-autosave";
+import { ElectronFileAdapter } from "@/lib/adapters/electron-file-adapter";
+import { LocalStorageAdapter } from "@/lib/adapters/local-storage-adapter";
+import type {
+  AISettings,
+  Book,
+  Chapter,
+  Entity,
+  Project,
+  ProjectContextType,
+  ProjectImage,
+  ProjectMetadata
+} from "@/lib/types";
+import { useApplication } from "@/providers/application-provider";
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { LocalStorageAdapter } from "@/lib/adapters/local-storage-adapter";
-import { ElectronFileAdapter } from "@/lib/adapters/electron-file-adapter";
-import type { Book, Chapter, Entity, Project } from "@/lib/types";
-import { useToast } from "@/components/ui/use-toast";
-import { useAutosave } from "@/hooks/use-autosave"; // Path updated if hook is in /hooks
-import { useApplication } from "@/providers/application-provider";
-import { useLanguage } from "@/contexts/language-context";
 
-interface ProjectContextType {
-  project: Project;
-  books: Book[];
-  entities: Entity[];
-  loading: boolean;
-  error: string | null;
-  saveProject: (updatedProject?: Project) => Promise<boolean>;
-  updateProject: (updatedProject: Project) => void;
-  addBook: (book: Book) => Book | undefined;
-  updateBook: (bookSlug: string, updatedBook: Partial<Book>) => void;
-  addChapter: (bookSlug: string, chapter: Chapter) => Chapter | undefined;
-  updateChapter: (
-    bookSlug: string,
-    chapterSlug: string,
-    updatedChapter: Partial<Chapter>
-  ) => void;
-  addEntity: (entity: Entity) => Entity | undefined;
-  updateEntity: (entitySlug: string, updatedEntity: Partial<Entity>) => void;
-  getBook: (bookSlug: string) => Book | null;
-  getChapter: (bookSlug: string, chapterSlug: string) => Chapter | null;
-  getEntity: (entitySlug: string) => Entity | null;
-
-  hasUnsavedChanges: boolean;
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
 
-// 2. Context Oluşturuluyor
+// Context creation
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-// 3. Provider Bileşeni
+// Provider Props
 interface ProjectProviderProps {
-  projectSlug: string; // Artık projectSlug bir prop olarak alınıyor
+  projectSlug: string;
   children: React.ReactNode;
 }
 
 export function ProjectProvider({ children, projectSlug }: ProjectProviderProps) {
-  const [project, setProject] = useState<Project | null>(null);
+  // Separate state variables
+  const [projectMetadata, setProjectMetadata] = useState<ProjectMetadata | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [images, setImages] = useState<ProjectImage[]>([]);
+  const [aiSettings, setAISettings] = useState<AISettings | undefined>(undefined);
+
+  // Utility states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
+
   const { t } = useLanguage();
   const { toast } = useToast();
   const { deleteAutosave, saveAutosave } = useAutosave();
-
   const { isElectron } = useApplication();
 
-  // Get the appropriate adapter based on platform
+  // Adapter selection
   const getAdapter = useCallback(() => {
     return isElectron ? new ElectronFileAdapter() : new LocalStorageAdapter();
   }, [isElectron]);
 
-  // Load project
+  // Metadata update helper
+  const updateMetadataTimestamp = useCallback(() => {
+    if (projectMetadata) {
+      const updatedMetadata = {
+        ...projectMetadata,
+        updatedAt: new Date().toISOString(),
+      };
+      setProjectMetadata(updatedMetadata);s
+      return updatedMetadata;
+    }
+    return null;
+  }, [projectMetadata]);
+
+  // Flattened save format creation
+  const createSaveFormat = useCallback((): Project | null => {
+    if (!projectMetadata) return null;
+
+    return {
+      aiSettings,
+      books,
+      chapters,
+      entities,
+      images,
+      metadata: projectMetadata,
+    } satisfies Project;
+  }, [projectMetadata, aiSettings, books, chapters, entities, images]);
+
+  // Stable autosave function (not wrapped in useCallback to avoid dependency issues)
+  const triggerAutosave = useRef(() => {
+    if (!isElectron) {
+      const saveData = createSaveFormat();
+      if (saveData) {
+        saveAutosave(saveData as Project);
+      }
+    }
+  });
+
+  // Update the ref when dependencies change
+  useEffect(() => {
+    triggerAutosave.current = () => {
+      if (!isElectron) {
+        const saveData = createSaveFormat();
+        if (saveData) {
+          saveAutosave(saveData as Project);
+        }
+      }
+    };
+  }, [isElectron, createSaveFormat, saveAutosave]);
+
+  // Debounced autosave
+  const debouncedAutosave = useMemo(
+    () => debounce(() => triggerAutosave.current(), 1000), // Wait 1 second
+    []
+  );
+
+  // Project loading
   const loadProject = useCallback(async () => {
     console.log("Loading project:", projectSlug);
     if (!projectSlug) return;
@@ -78,349 +139,336 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
       const adapter = getAdapter();
       console.log("Loading project:", projectSlug, "type: ", adapter.type);
       const loadedProject = await adapter.loadProject(projectSlug);
+
       if (loadedProject) {
-        setProject(loadedProject);
+        setProjectMetadata(loadedProject.metadata);
+        setBooks(loadedProject.books || []);
+        setChapters(loadedProject.chapters || []);
+        setEntities(loadedProject.entities || []);
+        setImages(loadedProject.images || []);
+        setAISettings(loadedProject.aiSettings);
+        setLastSaveTime(loadedProject.metadata.updatedAt);
       } else {
-        setError("Project not found");
+        setError(t("project_load_failed"));
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       console.error("Error loading project:", err);
-      setError("Error loading project");
+      setError(t("project_load_failed"));
+
+      toast({
+        description: errorMessage,
+        title: t("project_loading_error"),
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  }, [projectSlug, getAdapter]);
+  }, [projectSlug, getAdapter, t, toast]);
 
-  // Save project
-  const saveProject = useCallback(
-    async (updatedProject?: Project) => {
-      const projectToSave = updatedProject || project;
-      if (!projectToSave) return false;
+  // Project saving
+  const saveProject = useCallback(async () => {
+    const saveData = createSaveFormat();
+    if (!saveData) return false;
 
-      try {
-        const adapter = getAdapter();
-        const success = await adapter.saveProject(projectToSave);
-        if (success) {
-          // Update local state if we saved a different project
-          if (updatedProject) {
-            setProject(updatedProject);
-          }
+    try {
+      const adapter = getAdapter();
+      const success = await adapter.saveProject(saveData);
 
-          setLastSaveTime(projectToSave.updatedAt)
+      if (success) {
+        setLastSaveTime(saveData.metadata.updatedAt);
 
-          // Delete any autosave when manually saving (only in browser mode)
-          if (!isElectron) {
-            deleteAutosave(projectToSave.slug);
-          }
-
-          toast({
-            description: isElectron
-              ? "Proje dosya sistemine kaydedildi."
-              : "Proje tarayıcı depolamasına kaydedildi.",
-            title: "Proje kaydedildi",
-          });
-
-          return true;
-        } else {
-          throw new Error("Proje kaydedilemedi");
+        // Clean autosave (browser mode only)
+        if (!isElectron) {
+          deleteAutosave(saveData.metadata.slug);
         }
-      } catch (err) {
-        console.error("Error saving project:", err);
 
         toast({
-          description:
-            "Projenizi kaydetme sırasında bir hata oluştu. Lütfen tekrar deneyin.",
-          title: "Proje kaydetme hatası",
-          variant: "destructive",
+          description: isElectron
+            ? t("project_saved_electron")
+            : t("project_saved_browser"),
+          title: t("project_saved"),
         });
 
-        return false;
+        return true;
+      } else {
+        throw new Error("Project save failed");
       }
-    },
-    [project, toast, deleteAutosave, getAdapter, isElectron]
-  );
-
-  // Update project
-  const updateProject = useCallback(
-    (updatedProject: Project) => {
-      setProject(updatedProject);
-      // Autosave on update (only in browser mode)
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-    },
-    [saveAutosave, isElectron]
-  );
-
-  // Add book
-  const addBook = useCallback(
-    (book: Book) => {
-      if (!project) return;
-
-      const updatedProject = {
-        ...project,
-        books: [...project.books, book],
-        updatedAt: new Date().toISOString(),
-      };
-
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-
-      return book;
-    },
-    [project, saveAutosave, isElectron]
-  );
-
-  // Update book
-  const updateBook = useCallback(
-    (bookSlug: string, updatedBook: Partial<Book>) => {
-      if (!project) return;
-
-      const updatedBooks = project.books.map((book) =>
-        book.slug === bookSlug ? { ...book, ...updatedBook } : book
-      );
-
-      const updatedProject = {
-        ...project,
-        books: updatedBooks,
-        updatedAt: new Date().toISOString(),
-      };
-
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-    },
-    [project, saveAutosave, isElectron]
-  );
-
-  // Add chapter
-  const addChapter = useCallback(
-    (bookSlug: string, chapter: Chapter) => {
-      if (!project) return;
-
-      let bookFound = false
-      const updatedBooks = project.books.map((book) => {
-        if (book.slug === bookSlug) {
-          bookFound = true
-          return {
-            ...book,
-            chapters: [...book.chapters, chapter],
-          };
-        }
-        return book;
-      });
-
-      if (!bookFound) {
-        toast({
-          description: t("chapter_created_failed_description", { bookSlug, title: chapter.title }),
-          title: t("chapter_created_failed"),
-          variant: "destructive",
-        })
-        return
-      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Error saving project:", errorMessage);
       toast({
-        description: t("chapter_created_description", { title: chapter.title }),
-        title: t("chapter_created"),
-        variant: "success",
-      })
-
-      const updatedProject = {
-        ...project,
-        books: updatedBooks,
-        updatedAt: new Date().toISOString(),
-      };
-
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-
-      return chapter;
-    },
-    [project, saveAutosave, isElectron]
-  );
-
-  // Update chapter
-  const updateChapter = useCallback(
-    (bookSlug: string, chapterSlug: string, updatedChapter: Partial<Chapter>) => {
-      if (!project) return;
-
-      const updatedBooks = project.books.map((book) => {
-        if (book.slug === bookSlug) {
-          const updatedChapters = book.chapters.map((chapter) =>
-            chapter.slug === chapterSlug ? { ...chapter, ...updatedChapter } : chapter
-          );
-          return {
-            ...book,
-            chapters: updatedChapters,
-          };
-        }
-        return book;
+        description: t("project_save_failed"),
+        title: t("project_save_error"),
+        variant: "destructive",
       });
+      return false;
+    }
+  }, [createSaveFormat, getAdapter, isElectron, deleteAutosave, toast, t]);
 
-      const updatedProject = {
-        ...project,
-        books: updatedBooks,
-        updatedAt: new Date().toISOString(),
-      };
+  // Project Metadata Operations
+  const updateProjectMetadata = useCallback((updatedMetadata: Partial<ProjectMetadata>) => {
+    if (!projectMetadata) return;
 
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-    },
-    [project, saveAutosave, isElectron]
-  );
+    const newMetadata = {
+      ...projectMetadata,
+      ...updatedMetadata,
+      updatedAt: new Date().toISOString(),
+    };
 
-  // Add entity
-  const addEntity = useCallback(
-    (entity: Entity) => {
-      if (!project) return;
+    setProjectMetadata(newMetadata);
+    debouncedAutosave();
+  }, [projectMetadata, debouncedAutosave]);
 
-      const updatedProject = {
-        ...project,
-        entities: [...project.entities, entity],
-        updatedAt: new Date().toISOString(),
-      };
+  // Book Operations
+  const addBook = useCallback((book: Book) => {
+    setBooks(prev => [...prev, book]);
+    updateMetadataTimestamp();
+    debouncedAutosave();
+    return book;
+  }, [updateMetadataTimestamp, debouncedAutosave]);
 
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
+  const updateBook = useCallback((bookSlug: string, updatedBook: Partial<Book>) => {
+    setBooks(prev => prev.map(book =>
+      book.slug === bookSlug ? { ...book, ...updatedBook } : book
+    ));
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
 
-      return entity;
-    },
-    [project, saveAutosave, isElectron]
-  );
+  const deleteBook = useCallback((bookSlug: string) => {
+    const chaptersToDelete = chapters.filter(chapter => chapter.bookSlug === bookSlug);
+    const chapterSlugs = chaptersToDelete.map(chapter => chapter.slug);
 
-  // Update entity
-  const updateEntity = useCallback(
-    (entitySlug: string, updatedEntity: Partial<Entity>) => {
-      if (!project) return;
+    // Delete book
+    setBooks(prev => prev.filter(book => book.slug !== bookSlug));
 
-      const updatedEntities = project.entities.map((entity) =>
-        entity.slug === entitySlug ? { ...entity, ...updatedEntity } : entity
-      );
+    // Delete related chapters
+    setChapters(prev => prev.filter(chapter => chapter.bookSlug !== bookSlug));
 
-      const updatedProject = {
-        ...project,
-        entities: updatedEntities,
-        updatedAt: new Date().toISOString(),
-      };
+    // Clean book and chapter references from entities' usages
+    setEntities(prev => prev.map(entity => ({
+      ...entity,
+      usages: entity.usages?.filter(usage =>
+        usage.bookSlug !== bookSlug && !chapterSlugs.includes(usage.chapterSlug)
+      ) || []
+    })));
 
-      setProject(updatedProject);
-      if (!isElectron) {
-        saveAutosave(updatedProject);
-      }
-    },
-    [project, saveAutosave, isElectron]
-  );
+    // Notify user
+    toast({
+      title: t("book_deleted_with_chapters", { count: chaptersToDelete.length }),
+      variant: "default",
+    });
 
-  // Get book by ID
-  const getBook = useCallback(
-    (bookSlug: string) => {
-      if (!project) return null;
-      return project.books.find((book) => book.slug === bookSlug) || null;
-    },
-    [project]
-  );
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [chapters, updateMetadataTimestamp, debouncedAutosave, toast, t]);
 
-  // Get chapter by ID
-  const getChapter = useCallback(
-    (bookSlug: string, chapterSlug: string) => {
-      if (!project) return null;
-      const book = project.books.find((book) => book.slug === bookSlug);
-      if (!book) return null;
-      return book.chapters.find((chapter) => chapter.slug === chapterSlug) || null;
-    },
-    [project]
-  );
+  const getBook = useCallback((bookSlug: string) => {
+    return books.find(book => book.slug === bookSlug) || null;
+  }, [books]);
 
-  // Get entity by ID
-  const getEntity = useCallback(
-    (entitySlug: string) => {
-      if (!project) return null;
-      return project.entities.find((entity) => entity.slug === entitySlug) || null;
-    },
-    [project]
-  );
+  // Chapter Operations
+  const addChapter = useCallback((chapter: Chapter) => {
+    setChapters(prev => [...prev, chapter]);
+    updateMetadataTimestamp();
+    debouncedAutosave();
 
-  // Load project on mount or when projectSlug changes
+    toast({
+      description: t("chapter_created_description", { title: chapter.title }),
+      title: t("chapter_created"),
+      variant: "success",
+    });
+
+    return chapter;
+  }, [updateMetadataTimestamp, debouncedAutosave, toast, t]);
+
+  const updateChapter = useCallback((chapterSlug: string, updatedChapter: Partial<Chapter>) => {
+    setChapters(prev => prev.map(chapter =>
+      chapter.slug === chapterSlug ? { ...chapter, ...updatedChapter } : chapter
+    ));
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const deleteChapter = useCallback((chapterSlug: string) => {
+    setChapters(prev => prev.filter(chapter => chapter.slug !== chapterSlug));
+
+    // Clean chapter references from entities' usages
+    setEntities(prev => prev.map(entity => ({
+      ...entity,
+      usages: entity.usages?.filter(usage => usage.chapterSlug !== chapterSlug) || []
+    })));
+
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const getChapter = useCallback((chapterSlug: string) => {
+    return chapters.find(chapter => chapter.slug === chapterSlug) || null;
+  }, [chapters]);
+
+  const getChaptersForBook = useCallback((bookSlug: string) => {
+    return chapters.filter(chapter => chapter.bookSlug === bookSlug);
+  }, [chapters]);
+
+  // Entity Operations
+  const addEntity = useCallback((entity: Entity) => {
+    setEntities(prev => [...prev, entity]);
+    updateMetadataTimestamp();
+    debouncedAutosave();
+    return entity;
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const updateEntity = useCallback((entitySlug: string, updatedEntity: Partial<Entity>) => {
+    setEntities(prev => prev.map(entity =>
+      entity.slug === entitySlug ? { ...entity, ...updatedEntity } : entity
+    ));
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const deleteEntity = useCallback((entitySlug: string) => {
+    // Delete entity
+    setEntities(prev => prev.filter(entity => entity.slug !== entitySlug));
+
+    // Clean entity references from other entities' usages
+    setEntities(prev => prev.map(entity => ({
+      ...entity,
+      usages: entity.usages?.filter(usage => 
+        !(usage.bookSlug && usage.chapterSlug) // Keep only valid usages
+      ) || []
+    })));
+
+    toast({
+      description: t("entity_references_cleaned"),
+      title: t("entity_deleted"),
+    });
+
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave, toast, t]);
+
+  const getEntity = useCallback((entitySlug: string) => {
+    return entities.find(entity => entity.slug === entitySlug) || null;
+  }, [entities]);
+
+  // Image Operations
+  const addProjectImage = useCallback((image: ProjectImage) => {
+    setImages(prev => [...prev, image]);
+    updateMetadataTimestamp();
+    debouncedAutosave();
+    return image;
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const updateProjectImage = useCallback((imageId: string, updatedImage: Partial<ProjectImage>) => {
+    setImages(prev => prev.map(image =>
+      image.id === imageId ? { ...image, ...updatedImage } : image
+    ));
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  const deleteProjectImage = useCallback((imageId: string) => {
+    setImages(prev => prev.filter(image => image.id !== imageId));
+
+    // Clean image references
+    if (projectMetadata?.coverImageId === imageId) {
+      setProjectMetadata(prev => prev ? { ...prev, coverImageId: undefined } : null);
+    }
+    if (projectMetadata?.backgroundImageId === imageId) {
+      setProjectMetadata(prev => prev ? { ...prev, backgroundImageId: undefined } : null);
+    }
+
+    // Remove from entities' imageIds
+    setEntities(prev => prev.map(entity => ({
+      ...entity,
+      imageIds: entity.imageIds?.filter(id => id !== imageId)
+    })));
+
+    // Remove from chapters' imageIds
+    setChapters(prev => prev.map(chapter => ({
+      ...chapter,
+      imageIds: chapter.imageIds?.filter(id => id !== imageId)
+    })));
+
+    toast({
+      description: t("image_references_cleaned"),
+      title: t("image_deleted"),
+    });
+
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [projectMetadata, updateMetadataTimestamp, debouncedAutosave, toast, t]);
+
+  const getProjectImage = useCallback((imageId: string) => {
+    return images.find(image => image.id === imageId) || null;
+  }, [images]);
+
+  // AI Settings Operations
+  const updateAISettings = useCallback((settings: AISettings) => {
+    setAISettings(settings);
+    updateMetadataTimestamp();
+    debouncedAutosave();
+  }, [updateMetadataTimestamp, debouncedAutosave]);
+
+  // Load project on mount
   useEffect(() => {
     loadProject();
   }, [loadProject]);
 
-  const hasUnsavedChanges = lastSaveTime !== project?.updatedAt;
+  // Change detection
+  const hasUnsavedChanges = useMemo(() => {
+    return lastSaveTime !== projectMetadata?.updatedAt;
+  }, [lastSaveTime, projectMetadata?.updatedAt]);
 
-  // Tüm değerleri memoize ediyoruz ki gereksiz render'lar önlensin
-  const contextValue = useMemo(
-    () => ({
-      addBook,
-      addChapter,
-      addEntity,
-      books: project ? project.books : [],
-      entities: project ? project.entities : [],
-      error,
-      getBook,
-      getChapter,
-      getEntity,
-      hasUnsavedChanges,
-      loading,
-      project: project!,
-      saveProject,
-      updateBook,
-      updateChapter,
-      updateEntity,
-      updateProject,
-    }),
-    [
-      project,
-      loading,
-      error,
-      saveProject,
-      updateProject,
-      addBook,
-      updateBook,
-      addChapter,
-      updateChapter,
-      addEntity,
-      updateEntity,
-      getBook,
-      getChapter,
-      getEntity,
-      hasUnsavedChanges,
-    ]
-  );
+  // Context value
+  const contextValue = {
+    addBook,
+    addChapter,
+    addEntity,
+    addProjectImage,
+    aiSettings,
+    books,
+    chapters,
+    deleteBook,
+    deleteChapter,
+    deleteEntity,
+    deleteProjectImage,
+    entities,
+    error,
+    getBook,
+    getChapter,
+    getChaptersForBook,
+    getEntity,
+    getProjectImage,
+    hasUnsavedChanges,
+    images,
+    lastSaveTime,
+    loading,
+    projectMetadata,
+    saveProject,
+    updateAISettings,
+    updateBook,
+    updateChapter,
+    updateEntity,
+    updateProjectImage,
+    updateProjectMetadata,
+  };
 
-  return !project ? (
-    <div className="w-screen h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-15 w-15 border-b-2 border-gray-900"></div>
-      <button
-        className="hidden mt-4 px-4 py-2 bg-red-500 text-white rounded"
-        id="reload-button"
-        onClick={() => window.location.reload()}
-      >
-        Tekrar Yükle
-      </button>
-      <script>
-        {`
-          setTimeout(() => {
-            document.getElementById('reload-button').classList.remove('hidden');
-          }, 300000); // 5 minutes in milliseconds
-        `}
-      </script>
-    </div>
-  ) : (
+  // Show loading state if project is not loaded
+  if (!projectMetadata) {
+    return <ProjectLoadingState error={error} onRetry={loadProject} />;
+  }
+
+  return (
     <ProjectContext.Provider value={contextValue}>
       {children}
-      </ProjectContext.Provider >
-    )
+    </ProjectContext.Provider>
+  );
 }
 
-// 4. Consumer Hook (Artık bu hook, eski useProject'in yerini alıyor)
+// Consumer Hook
 export function useProject() {
   const context = useContext(ProjectContext);
   if (context === undefined) {

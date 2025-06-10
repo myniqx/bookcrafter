@@ -99,6 +99,22 @@ const tr = {
   locations: "Mekanlar",
   items: "Eşyalar",
   events: "Olaylar",
+
+  project_loading: "Proje Yükleniyor...",
+  project_loading_error: "Proje Yüklenme Hatası",
+  project_load_failed: "Proje yüklenemedi. Lütfen tekrar deneyin.",
+  try_again: "Tekrar Dene",
+  reload_project: "Proje Yeniden Yükle",
+  project_saved: "Proje Kaydedildi",
+  project_saved_electron: "Proje dosya sistemine kaydedildi.",
+  project_saved_browser: "Proje tarayıcı depolama alanına kaydedildi.",
+  project_save_error: "Proje Kayıt Hatası",
+  project_save_failed: "Projenizi kaydetme sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+  book_deleted_with_chapters: "{count} bölümle birlikte kitap silindi",
+  entity_deleted: "Öğe silindi",
+  entity_references_cleaned: "Öğe referansları tüm bölümlerden temizlendi",
+  image_deleted: "Resim silindi",
+  image_references_cleaned: "Resim referansları tüm konumlarından temizlendi"
 }
 
 const translations: Record<Language, typeof tr> = {
@@ -107,8 +123,7 @@ const translations: Record<Language, typeof tr> = {
     // App general
     app_title: "Book Writing and World Building",
     welcome: "Welcome",
-    welcome_description:
-      "Welcome to the book writing and world building application. With this app, you can write book series, create world-building elements like characters and locations, and use them dynamically in your writings.",
+    welcome_description: "Welcome to the book writing and world building application. With this app, you can write book series, create world-building elements like characters and locations, and use them dynamically in your writings.",
     get_started: "Get started by creating a new project or loading an existing one.",
 
     // Navigation
@@ -177,6 +192,22 @@ const translations: Record<Language, typeof tr> = {
 
     // Autosave
     autosaved: "Autosaved",
+
+    project_loading: "Project loading...",
+    project_loading_error: "Project Loading Error",
+    project_load_failed: "Project failed to load. Please try again.",
+    try_again: "Try Again",
+    reload_project: "Reload Project",
+    project_saved: "Project saved",
+    project_saved_electron: "Project saved to file system.",
+    project_saved_browser: "Project saved to browser storage.",
+    project_save_error: "Project save error",
+    project_save_failed: "An error occurred while saving your project. Please try again.",
+    book_deleted_with_chapters: "Book deleted with {count} chapters",
+    entity_deleted: "Entity deleted",
+    entity_references_cleaned: "Entity references cleaned from chapters",
+    image_deleted: "Image deleted",
+    image_references_cleaned: "Image references cleaned from all locations",
   },
 }
 

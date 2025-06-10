@@ -1,28 +1,27 @@
 "use client"
 import { Button } from "@/components/ui/button";
-import { Book, Chapter, Entity, Project } from "@/lib/types";
+import { Book, Chapter } from "@/lib/types";
 import { BookOpen, StepBack } from "lucide-react";
 import Link from "next/link";
 import { createContext, useContext, useMemo } from "react";
-import { useProject } from "./project-provider";
-import { goToChapter } from "@/lib/utils/navigateTo";
-
-interface ChapterWithHref extends Chapter {
-  href: string;
-}
+import { ProjectContextType, useProject } from "./project-provider";
 
 
-interface BookContextType {
-  project: Project
-  book: Book
-  chapters: ChapterWithHref[] | undefined
-  entities: Entity[] | undefined
-  updateBook: (data: Partial<Book>) => void;
-  getChapter: (chapterSlug: string) => Chapter | null;
-  addChapter: (chapter: Chapter) => Chapter | undefined;
-  updateChapter: (chapterSlug: string, data: Partial<Chapter>) => void;
-  hasUnsavedChanges: boolean;
-}
+
+export type BookContextType =
+  Omit<ProjectContextType,
+    | 'updateBook'
+    | 'getChapter'
+    | 'addChapter'
+  >
+  & {
+    book: Book
+    chapters: Chapter[]
+    updateBook: (data: Partial<Book>) => void;
+    getChapter: (chapterSlug: string) => Chapter | null;
+    addChapter: (chapter: Chapter) => Chapter | undefined;
+    updateChapter: (chapterSlug: string, data: Partial<Chapter>) => void;
+  }
 
 interface BookProviderProps {
   bookSlug: string;
@@ -36,49 +35,30 @@ export function BookProvider({ bookSlug, children }: BookProviderProps) {
     addChapter,
     getBook,
     getChapter,
-    hasUnsavedChanges,
     project,
     updateBook,
-    updateChapter
+    updateChapter,
+    ...rest
   } = useProject();
 
   const value = useMemo(
-    () => {
+    (): BookContextType => {
       const book = getBook(bookSlug)!;
-      const chapters =
-        book.chapters && book.chapters.length > 0
-          ? book.chapters.map((chapter) => ({
-            ...chapter,
-            href: goToChapter({ book, chapter, project })
-          }))
-          : undefined
-
-      const entities = project.entities && project.entities.length > 0
-        ? project.entities
-        : undefined
+      const chapters = book.chapters || []
 
       return {
         addChapter: (chapter: Chapter) => addChapter(bookSlug, chapter),
         book,
         chapters,
-        entities,
+        getBook,
         getChapter: (chapterSlug: string) => getChapter(bookSlug, chapterSlug),
-        hasUnsavedChanges,
         project,
         updateBook: (data: Partial<Book>) => updateBook(bookSlug, data),
-        updateChapter: (chapterSlug: string, data: Partial<Chapter>) => updateChapter(bookSlug, chapterSlug, data)
+        updateChapter: (chapterSlug: string, data: Partial<Chapter>) => updateChapter(bookSlug, chapterSlug, data),
+        ...rest
       }
     },
-    [
-      project,
-      bookSlug,
-      getBook,
-      updateBook,
-      getChapter,
-      updateChapter,
-      addChapter,
-      hasUnsavedChanges
-    ]
+    [getBook, bookSlug, project, rest, addChapter, getChapter, updateBook, updateChapter]
   );
 
   if (!value.book) {
