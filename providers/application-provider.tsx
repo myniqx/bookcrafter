@@ -4,6 +4,8 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { APP_NAME } from "@/lib/constants"
 
+
+
 interface ApplicationSettings {
   autoSave: boolean
   autoSaveInterval: number
@@ -24,9 +26,9 @@ interface ApplicationContextType {
 const defaultSettings: ApplicationSettings = {
   autoSave: true,
   autoSaveInterval: 30000, // 30 seconds
-  theme: "system",
-  language: "tr",
   fontSize: 14,
+  language: "tr",
+  theme: "system",
 }
 
 const ApplicationContext = createContext<ApplicationContextType | undefined>(undefined)
@@ -40,7 +42,7 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
     // Check if running in Electron
     const checkElectron = () => {
       if (typeof window !== "undefined") {
-        const isElectronApp = !!(window as any).electronAPI
+        const isElectronApp = !!window.electronAPI
         setIsElectron(isElectronApp)
 
         if (isElectronApp) {
@@ -87,12 +89,12 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
   }
 
   const value: ApplicationContextType = {
-    isElectron,
     appName: APP_NAME,
     appVersion: "1.0.0",
+    isElectron,
+    platform,
     settings,
     updateSettings,
-    platform,
   }
 
   return <ApplicationContext.Provider value={value}>{children}</ApplicationContext.Provider>

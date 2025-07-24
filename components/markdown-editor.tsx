@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { Entity } from "@/lib/types"
 
@@ -9,9 +9,16 @@ import { Textarea } from "@/components/ui/textarea"
 
 import { useChapter } from "@/providers/chapter-provider"
 import { Save } from "lucide-react"
-import { AIPromptDropdown } from "./ai-prompt-dropdown"
 import { EntityBadgesList } from "./entity-badges-list"
 import { Button } from "./ui/button"
+import { AIPromptDropdown } from "./ai-prompt-dropdown"
+import { EntitySuggestion, EntitySuggestions } from "./entity-suggestions"
+
+// Constants
+const SUGGESTION_LIMIT = 10
+const DROPDOWN_OFFSET = 20
+const DEBOUNCE_DELAY = 150
+const MIN_SEARCH_LENGTH = 0
 
 interface MarkdownEditorProps {
   content: string
@@ -20,93 +27,192 @@ interface MarkdownEditorProps {
   onProcessedContentChange: (processed: string) => void
 }
 
+interface CursorPosition {
+  top: number
+  left: number
+}
+
+interface EntityReference {
+  entitySlug: string
+  property?: string
+}
+
+// Custom hook for click outside detection
+const useClickOutside = (
+  ref: React.RefObject<HTMLElement | null>,
+  callback: () => void
+) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        callback()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [ref, callback])
+}
+
+// Debounce hook
+const useDebounce = <T = unknown>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
 export function MarkdownEditor({
   content,
   currentChapter,
   onChange,
   onProcessedContentChange,
 }: MarkdownEditorProps) {
-  const { book, chapter, entities, saveProject, updateChapter } = useChapter()
+  const { book, chapter, entities, saveProject, setEntities, updateChapter } = useChapter()
+
+  // State
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)
   const [entitySuggestions, setEntitySuggestions] = useState<Entity[]>([])
-  const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number }>({ left: 0, top: 0 })
-  const [searchTerm, setSearchTerm] = useState("")
+  const [cursorPosition, setCursorPosition] = useState<CursorPosition>({ left: 0, top: 0 })
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [selectedText, setSelectedText] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
 
-  const handleSave = () => {
-    updateChapter({ content })
+  // Debounced search term for better performance
+  const debouncedSearchTerm = useDebounce(searchTerm, DEBOUNCE_DELAY)
 
-    // Update entity references
-    const entityReferences = extractEntityReferences(content, entities)
-    const updatedEntities = entities.map((entity) => {
-      const references = entityReferences.filter((ref) => ref.entitySlug === entity.slug)
-      if (references.length > 0) {
-        const updatedUsages = [...(entity.usages || [])]
+  // Click outside to close suggestions
+  useClickOutside(suggestionsRef, () => {
+    setShowEntitySuggestions(false)
+  })
 
-        // Check if this chapter is already in usages
-        const existingUsageIndex = updatedUsages.findIndex(
-          (usage) => usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug,
-        )
+  // Memoized entity regex patterns for better performance
+  const entityRegexPatterns = useMemo(() => {
+    if (!entities) return []
 
-        if (existingUsageIndex >= 0) {
-          // Update existing usage
-          updatedUsages[existingUsageIndex] = {
-            bookSlug: book.slug,
-            chapterSlug: chapter.slug,
-            count: references.length,
+    return entities.map(entity => ({
+      defaultRegex: new RegExp(`@${entity.slug}\\b`, "g"),
+      entity,
+      propertyRegexes: entity.properties.map(property => ({
+        property,
+        regex: new RegExp(`@${entity.slug}\\.${property.name}\\b`, "g")
+      }))
+    }))
+  }, [entities])
+
+  // Memoized filtered entity suggestions
+  const filteredEntitySuggestions = useMemo(() => {
+    if (!entities || debouncedSearchTerm.length < MIN_SEARCH_LENGTH) {
+      return entities?.slice(0, SUGGESTION_LIMIT) || []
+    }
+
+    return entities
+      .filter(entity =>
+        entity.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        entity.slug.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      )
+      .slice(0, SUGGESTION_LIMIT)
+  }, [entities, debouncedSearchTerm])
+
+  // Update suggestions when filtered results change
+  useEffect(() => {
+    setEntitySuggestions(filteredEntitySuggestions)
+    setSelectedIndex(0) // Reset selection when suggestions change
+  }, [filteredEntitySuggestions])
+
+  // Save functionality with loading state
+  const handleSave = useCallback(async () => {
+    if (isSaving) return
+
+    try {
+      setIsSaving(true)
+      updateChapter({ content })
+
+      // Update entity references
+      const entityReferences = extractEntityReferences(content, entities || [])
+      setEntities(entities => entities?.map((entity) => {
+        const references = entityReferences.filter((ref) => ref.entitySlug === entity.slug)
+
+        if (references.length > 0) {
+          const updatedUsages = [...(entity.usages || [])]
+
+          // Check if this chapter is already in usages
+          const existingUsageIndex = updatedUsages.findIndex(
+            (usage) => usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug,
+          )
+
+          if (existingUsageIndex >= 0) {
+            // Update existing usage
+            updatedUsages[existingUsageIndex] = {
+              bookSlug: book.slug,
+              chapterSlug: chapter.slug,
+              count: references.length,
+            }
+          } else {
+            // Add new usage
+            updatedUsages.push({
+              bookSlug: book.slug,
+              chapterSlug: chapter.slug,
+              count: references.length,
+            })
+          }
+
+          return {
+            ...entity,
+            usages: updatedUsages,
           }
         } else {
-          // Add new usage
-          updatedUsages.push({
-            bookSlug: book.slug,
-            chapterSlug: chapter.slug,
-            count: references.length,
-          })
+          // Remove this chapter from usages if it exists
+          const updatedUsages = (entity.usages || []).filter(
+            (usage) => !(usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug),
+          )
+
+          return {
+            ...entity,
+            usages: updatedUsages,
+          }
         }
+      }) || [])
 
-        return {
-          ...entity,
-          usages: updatedUsages,
-        }
-      } else {
-        // Remove this chapter from usages if it exists
-        const updatedUsages = (entity.usages || []).filter(
-          (usage) => !(usage.bookSlug === book.slug && usage.chapterSlug === chapter.slug),
-        )
-
-        return {
-          ...entity,
-          usages: updatedUsages,
-        }
-      }
-    })
-
-    updateProject({
-      entities: updatedEntities,
-    })
-
-    saveProject()
-  }
+      await saveProject()
+    } catch (error) {
+      console.error('Error saving project:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [content, entities, book.slug, chapter.slug, updateChapter, setEntities, saveProject, isSaving])
 
   // Process content to replace entity references and apply markdown
   useEffect(() => {
     let processed = content
 
-    // Replace entity references (@slug or @slug.property)
-    entities?.forEach((entity) => {
+    // Use memoized regex patterns for better performance
+    entityRegexPatterns.forEach(({ defaultRegex, entity, propertyRegexes }) => {
       // Replace @slug with default property
       const defaultProperty = entity.properties.find((p) => p.isDefault)
       if (defaultProperty) {
-        const regex = new RegExp(`@${entity.slug}\\b`, "g")
-        processed = processed.replace(regex, defaultProperty.value)
+        processed = processed.replace(defaultRegex, defaultProperty.value)
       }
 
       // Replace @slug.property with property value
-      entity.properties.forEach((property) => {
-        const regex = new RegExp(`@${entity.slug}\\.${property.name}\\b`, "g")
+      propertyRegexes.forEach(({ property, regex }) => {
         processed = processed.replace(regex, property.value)
       })
     })
@@ -116,56 +222,47 @@ export function MarkdownEditor({
     processed = processed.replace(/\/\*[\s\S]*?\*\//g, "") // Remove multi-line comments
 
     onProcessedContentChange(processed)
-  }, [content, entities, onProcessedContentChange])
+  }, [content, entityRegexPatterns, onProcessedContentChange])
 
-  // Calculate position for the @ dropdown
   const calculateDropdownPosition = useCallback(
-    (textarea: HTMLTextAreaElement, atPosition: number) => {
-      // Create a mirror div to calculate position
-      const mirror = document.createElement("div")
-      mirror.style.position = "absolute"
-      mirror.style.top = "0"
-      mirror.style.left = "0"
-      mirror.style.visibility = "hidden"
-      mirror.style.whiteSpace = "pre-wrap"
-      mirror.style.wordWrap = "break-word"
-      mirror.style.width = `${textarea.clientWidth}px`
-      mirror.style.padding = window.getComputedStyle(textarea).padding
-      mirror.style.font = window.getComputedStyle(textarea).font
-      mirror.style.lineHeight = window.getComputedStyle(textarea).lineHeight
+    (textarea: HTMLTextAreaElement, atPosition: number): CursorPosition => {
+      try {
+        const textareaStyle = window.getComputedStyle(textarea)
 
-      // Get text up to the @ symbol
-      const textUpToAt = content.substring(0, atPosition)
+        // Get text up to the @ symbol
+        const textUpToAt = content.substring(0, atPosition)
 
-      // Create a span for measuring
-      const span = document.createElement("span")
-      span.textContent = textUpToAt
-      mirror.appendChild(span)
+        // Calculate relative position
+        let lineHeight = parseInt(textareaStyle.lineHeight) || 0
+        if (!lineHeight || isNaN(lineHeight)) {
+          const fontSize = parseInt(textareaStyle.fontSize) || 16
+          lineHeight = Math.ceil(fontSize * 1.4)
+        }
+        const paddingLeft = parseInt(textareaStyle.paddingLeft) || 0
+        const paddingTop = parseInt(textareaStyle.paddingTop) || 0
 
-      document.body.appendChild(mirror)
+        // Estimate cursor position
+        const lines = textUpToAt.split('\n')
+        const currentLine = lines.length - 1
+        const currentLineText = lines[currentLine] || ''
 
-      // Get position of the @ symbol
-      const rect = textarea.getBoundingClientRect()
-      const spanRect = span.getBoundingClientRect()
+        const top = (currentLine * lineHeight) + paddingTop + (lineHeight * 3) + DROPDOWN_OFFSET - textarea.scrollTop
+        const left = paddingLeft + (currentLineText.length * 8) // Rough character width estimation
 
-      // Calculate position relative to textarea
-      const top = spanRect.height - textarea.scrollTop + 10 // 10px below the @ symbol
-      const left =
-        (spanRect.width % mirror.clientWidth) + Number.parseInt(window.getComputedStyle(textarea).paddingLeft)
-
-      document.body.removeChild(mirror)
-
-      return { left, top }
+        return { left, top }
+      } catch (error) {
+        console.error('Error calculating dropdown position:', error)
+        return { left: 0, top: 30 } // Fallback position
+      }
     },
-    [content],
+    [content]
   )
 
-  // Handle textarea input to show entity suggestions
-  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  // Handle textarea input with improved @ detection
+  const handleTextareaInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
     onChange(newContent)
 
-    // Check if we should show entity suggestions
     const textarea = e.target
     const cursorPos = textarea.selectionStart
     const textBeforeCursor = newContent.substring(0, cursorPos)
@@ -179,41 +276,32 @@ export function MarkdownEditor({
       const hasSpaceOrNewline = /[\s\n]/.test(textBetweenAtAndCursor)
 
       if (!hasSpaceOrNewline) {
-        // Get the search term (text after @)
-        const term = textBetweenAtAndCursor
-        setSearchTerm(term)
-
-        // Filter entities based on the search term
-        const suggestions = entities
-          ?.filter(
-            (entity) =>
-              entity.name.toLowerCase().includes(term.toLowerCase()) ||
-              entity.slug.toLowerCase().includes(term.toLowerCase()),
-          )
-          .slice(0, 10) // Limit to 10 suggestions
-          || []
-
-        setEntitySuggestions(suggestions)
-        setSelectedIndex(0) // Reset selected index when suggestions change
+        // Set search term for debounced filtering
+        setSearchTerm(textBetweenAtAndCursor)
 
         // Calculate position for suggestions dropdown
-        if (textareaRef.current) {
-          const position = calculateDropdownPosition(textareaRef.current, lastAtPos)
+        try {
+          const position = calculateDropdownPosition(textarea, lastAtPos)
           setCursorPosition(position)
+          setShowEntitySuggestions(true)
+        } catch (error) {
+          console.error('Error showing entity suggestions:', error)
+          setShowEntitySuggestions(false)
         }
-
-        setShowEntitySuggestions(suggestions.length > 0)
         return
       }
     }
 
     // Hide suggestions if no @ or there's a space after @
     setShowEntitySuggestions(false)
-  }
+    setSearchTerm("")
+  }, [onChange, calculateDropdownPosition])
 
   // Handle entity selection from suggestions
-  const handleEntitySelect = (entity: Entity) => {
-    if (textareaRef.current) {
+  const handleEntitySelect = useCallback((entity: Entity) => {
+    if (!textareaRef.current) return
+
+    try {
       const cursorPos = textareaRef.current.selectionStart
       const textBeforeCursor = content.substring(0, cursorPos)
       const lastAtPos = textBeforeCursor.lastIndexOf("@")
@@ -221,7 +309,6 @@ export function MarkdownEditor({
       if (lastAtPos !== -1) {
         // Replace the @searchTerm with @entity.slug
         const newContent = content.substring(0, lastAtPos) + `@${entity.slug}` + content.substring(cursorPos)
-
         onChange(newContent)
 
         // Set cursor position after the inserted entity reference
@@ -233,25 +320,41 @@ export function MarkdownEditor({
           }
         }, 0)
       }
+    } catch (error) {
+      console.error('Error selecting entity:', error)
     }
 
     setShowEntitySuggestions(false)
-  }
+    setSearchTerm("")
+  }, [content, onChange])
 
   // Handle keyboard navigation for entity suggestions
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Handle keyboard shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
+        case 's':
+          e.preventDefault()
+          handleSave()
+          return
+      }
+    }
+
     if (!showEntitySuggestions) return
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault()
-        setSelectedIndex((prevIndex) => (prevIndex < entitySuggestions.length - 1 ? prevIndex + 1 : prevIndex))
+        setSelectedIndex((prevIndex) =>
+          prevIndex < entitySuggestions.length - 1 ? prevIndex + 1 : prevIndex
+        )
         break
       case "ArrowUp":
         e.preventDefault()
-        setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0))
+        setSelectedIndex((prevIndex) => prevIndex > 0 ? prevIndex - 1 : 0)
         break
       case "Enter":
+      case "Tab":
         e.preventDefault()
         if (entitySuggestions[selectedIndex]) {
           handleEntitySelect(entitySuggestions[selectedIndex])
@@ -260,23 +363,33 @@ export function MarkdownEditor({
       case "Escape":
         e.preventDefault()
         setShowEntitySuggestions(false)
+        setSearchTerm("")
         break
     }
-  }
+  }, [showEntitySuggestions, entitySuggestions, selectedIndex, handleEntitySelect, handleSave])
 
-  // Handle text selection for AI processing
-  const handleTextSelection = () => {
-    if (textareaRef.current) {
-      const start = textareaRef.current.selectionStart
-      const end = textareaRef.current.selectionEnd
+  // Handle text selection for future AI processing
+  const handleTextSelection = useCallback(() => {
+    if (!textareaRef.current) return
 
-      if (start !== end) {
-        setSelectedText(content.substring(start, end))
-      } else {
-        setSelectedText("")
+    const start = textareaRef.current.selectionStart
+    const end = textareaRef.current.selectionEnd
+
+    if (start !== end) {
+      setSelectedText(content.substring(start, end))
+    } else {
+      setSelectedText("")
+    }
+  }, [content])
+
+  useEffect(() => {
+    if (showEntitySuggestions && suggestionsRef.current) {
+      const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ behavior: "smooth", block: "nearest" })
       }
     }
-  }
+  }, [selectedIndex, showEntitySuggestions])
 
   // Handle AI text replacement
   const handleTextReplace = (newText: string) => {
@@ -300,23 +413,26 @@ export function MarkdownEditor({
     }
   }
 
-  // Scroll selected item into view
-  useEffect(() => {
-    if (showEntitySuggestions && suggestionsRef.current) {
-      const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: "nearest" })
-      }
-    }
-  }, [selectedIndex, showEntitySuggestions])
-
   return (
-    <div className="relative">
+    <div className="relative flex flex-col gap-2" ref={editorContainerRef}>
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm text-muted-foreground">Markdown Editor</div>
+        <div className="text-sm text-muted-foreground">
+          Markdown Editor
+          {selectedText && (
+            <span className="ml-2 text-xs bg-primary/10 px-2 py-1 rounded">
+              {selectedText.length} karakter seçili
+            </span>
+          )}
+        </div>
         <div className="flex flex-row gap-2">
-          <Button onClick={handleSave} size="icon" title="Projeyi Kaydet" variant={"outline"}>
-            <Save className=" h-4 w-4" />
+          <Button
+            disabled={isSaving}
+            onClick={handleSave}
+            size="icon"
+            title="Projeyi Kaydet (Ctrl+S)"
+            variant="outline"
+          >
+            <Save className="h-4 w-4" />
           </Button>
           <AIPromptDropdown
             currentChapter={currentChapter}
@@ -333,46 +449,63 @@ export function MarkdownEditor({
         onKeyDown={handleKeyDown}
         onMouseUp={handleTextSelection}
         onSelect={handleTextSelection}
-        placeholder="Metninizi buraya yazın. @tanimlayici veya @tanimlayici.ozellik formatında öğe referansları kullanabilirsiniz. Markdown formatlaması desteklenir."
+        placeholder="Metninizi buraya yazın. @tanımlayıcı veya @tanımlayıcı.özellik formatında öğe referansları kullanabilirsiniz. Markdown formatlaması desteklenir."
         ref={textareaRef}
         value={content}
       />
 
       <EntityBadgesList entities={entities} />
 
-      {showEntitySuggestions && (
+      {showEntitySuggestions && entitySuggestions.length > 0 && (
         <div
-          className="absolute z-10 bg-background border rounded-md shadow-md max-h-60 overflow-y-auto w-64"
+          className="absolute z-10 bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto w-64"
           ref={suggestionsRef}
           style={{
             left: `${cursorPosition.left}px`,
             top: `${cursorPosition.top}px`,
           }}
         >
-          {entitySuggestions.map((entity, index) => (
-            <div
-              className={`p-2 cursor-pointer flex items-center gap-2 ${index === selectedIndex ? "bg-primary/10" : "hover:bg-muted"
-                }`}
-              key={entity.slug}
-              onClick={() => handleEntitySelect(entity)}
-            >
-              <div className="w-2 h-2 rounded-full bg-primary"></div>
-              <div>
-                <div className="font-medium">{entity.name}</div>
-                <div className="text-xs text-muted-foreground">@{entity.slug}</div>
+          {entitySuggestions.map((entity, index) => {
+            const value = entity.properties.find(p => p.isDefault)?.value
+            const trimmedValue = value && value.length > 30 ? value.substring(0, 30) + '...' : value
+
+
+            return (
+              <div
+                className={`p-2 cursor-pointer flex items-center gap-1 border-b border-border/50 last:border-b-0 ${index === selectedIndex
+                  ? "bg-primary/10 border-primary/20"
+                  : "hover:bg-muted/50"
+                  }`}
+                key={entity.slug}
+                onClick={() => handleEntitySelect(entity)}
+              >
+                <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">
+                    <span className="text-xs text-muted-foreground truncate mr-3">
+                      @{entity.slug}
+                    </span>
+
+                    {entity.name}
+                  </div>
+                  {trimmedValue && (
+                    <div className="text-xs text-muted-foreground/70 truncate mt-1">
+                      {trimmedValue}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
   )
 }
 
-
 // Helper function to extract entity references from content
-function extractEntityReferences(content: string, entities: Entity[]) {
-  const references: { entitySlug: string; property?: string }[] = []
+function extractEntityReferences(content: string, entities: Entity[]): EntityReference[] {
+  const references: EntityReference[] = []
 
   entities.forEach((entity) => {
     // Match @slug or @slug.property

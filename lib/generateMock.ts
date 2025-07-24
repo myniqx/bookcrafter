@@ -55,7 +55,7 @@ export const generateMock = (
     Array.from({ length: chapterCount }, (_, chapterIndex) => {
       const chapterSlug = `${book.slug}-chapter-${chapterIndex + 1}`;
       const entityRefsInContent = mockEntities.slice(0, Math.min(2, mockEntities.length))
-        .map(entity => `{{${entity.slug}}}`)
+        .map(entity => `{{ @${entity.slug} }}`)
         .join(' and ');
 
       const chapter: Chapter = {
@@ -78,7 +78,7 @@ export const generateMock = (
 
     mockChapters.forEach(chapter => {
       const book = mockBooks.find(b => b.slug === chapter.bookSlug);
-      if (book && chapter.content?.includes(`{{${entity.slug}}}`)) {
+      if (book && chapter.content?.includes(`{{ @${entity.slug} }}`)) {
         usages.push({
           bookSlug: book.slug,
           chapterSlug: chapter.slug,
@@ -104,7 +104,7 @@ export const generateMock = (
       createdAt: date,
       description: `Mock project created at ${date}`,
       name: `Mock Project ${date}`,
-      slug: `mock-project-${date}`,
+      slug: `mock-project-${date.replace(/:/g, "-")}`,
       updatedAt: date
     }
   }

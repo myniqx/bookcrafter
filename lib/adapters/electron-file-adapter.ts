@@ -3,20 +3,22 @@ import type { StorageAdapter } from "./adapter"
 
 import { ELECTRON_PATHS } from "../constants"
 
+
 declare global {
   interface Window {
-    electronAPI?: {
-      fileSystem: {
-        ensureDir: (path: string) => Promise<boolean>
-        writeFile: (path: string, data: string) => Promise<boolean>
-        readFile: (path: string) => Promise<string | null>
-        deleteFile: (path: string) => Promise<boolean>
-        deleteDir: (path: string) => Promise<boolean>
-        listDir: (path: string) => Promise<string[]>
-        exists: (path: string) => Promise<boolean>
-        getHomePath: () => Promise<string>
-        joinPath: (...paths: string[]) => string
-      }
+    electronAPI: {
+      env: { NODE_ENV: string, isDev: boolean };
+      fs: {
+        ensureDir: (dirPath: string) => Promise<{ success: boolean; error?: string }>;
+        writeFile: (filePath: string, data: string) => Promise<{ success: boolean; error?: string }>;
+        readFile: (filePath: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+        deleteFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+        deleteDir: (dirPath: string) => Promise<{ success: boolean; error?: string }>;
+        listDir: (dirPath: string) => Promise<{ success: boolean; data?: string[]; error?: string }>;
+        exists: (filePath: string) => Promise<{ success: boolean; exists?: boolean; error?: string }>;
+        getHomePath: () => Promise<{ success: boolean; data?: string; error?: string }>;
+        joinPath: (...paths: string[]) => Promise<{ success: boolean; data?: string; error?: string }>;
+      };
     }
   }
 }

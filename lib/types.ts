@@ -1,5 +1,7 @@
 // Core data types for the application
 
+import { Dispatch, SetStateAction } from "react"
+
 export type AdapterType = "localStorage" | "jsonFile" | "compressedFile" | "directorySync"
 
 export interface ProjectImage {
@@ -225,6 +227,7 @@ export interface ProjectContextType {
   // CRUD Operations
   saveProject: () => Promise<boolean>;
   updateProjectMetadata: (updatedMetadata: Partial<ProjectMetadata>) => void;
+  setEntities: Dispatch<SetStateAction<Entity[]>>
 
   // Book operations
   addBook: (book: Book) => Book;

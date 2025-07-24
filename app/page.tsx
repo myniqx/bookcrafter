@@ -13,11 +13,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useLanguage } from "@/contexts/language-context"
+import { useProjects } from "@/hooks/use-projects"
+import { generateMock } from "@/lib/generateMock"
+import { goToProject } from "@/lib/utils/navigateTo"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [loadDialogOpen, setLoadDialogOpen] = useState(false)
   const { t } = useLanguage()
+  const router = useRouter()
+  const { createProject } = useProjects()
+  const mockProject = () => {
+    const mock = generateMock()
+    createProject(mock)
+    goToProject({ project: { slug: mock.metadata.slug }, router })
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
@@ -43,6 +54,14 @@ export default function Home() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button
+              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              onClick={mockProject}
+              size="lg"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Mock Project
+            </Button>
             <Button
               className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
               onClick={() => setCreateDialogOpen(true)}

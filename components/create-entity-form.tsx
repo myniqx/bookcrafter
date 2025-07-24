@@ -134,6 +134,7 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
       setName("")
       setSlug("")
       setDescription("")
+      onCancel()
     } catch (err) {
       console.error(`${getEntityTypeTitle()} oluşturulurken hata oluştu:`, err)
       setError(`${getEntityTypeTitle()} oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.`)

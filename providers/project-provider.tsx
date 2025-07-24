@@ -457,6 +457,7 @@ export function ProjectProvider({ children, projectSlug }: ProjectProviderProps)
     loading,
     project: projectMetadata,
     saveProject,
+    setEntities,
     updateAISettings,
     updateBook,
     updateChapter,
