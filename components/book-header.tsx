@@ -7,13 +7,25 @@ import type { Book } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
 import { goToProject } from "@/lib/utils/navigateTo"
-import { useBook } from "@/providers/book-provider"
+import { useCurrentBookStore, useCurrentProjectStore } from "@/lib/stores"
+import { useBookActions } from "@/hooks/use-book-actions"
 
 import { EditableText } from "./editable-text"
 
-
 export function BookHeader() {
-  const { book, hasUnsavedChanges, project, updateBook } = useBook();
+  const { book } = useCurrentBookStore()
+  const { metadata: project } = useCurrentProjectStore()
+  const { updateBook, isUpdating } = useBookActions(project?.slug || '')
+  
+  const handleUpdateBook = async (updates: Partial<Book>) => {
+    if (!book) return
+    
+    try {
+      await updateBook(book.slug, updates)
+    } catch (error) {
+      console.error('Failed to update book:', error)
+  }
+  
   const projectLink = goToProject({ project })
 
   return (
@@ -30,15 +42,15 @@ export function BookHeader() {
             <EditableText
               className="bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400"
               isTitle
-              onChange={(title) => updateBook({ title })}
+              onChange={(title) => handleUpdateBook({ title })}
               value={book.title}
             />
-            {hasUnsavedChanges && <span className="text-red-500">*</span>}
+            {isUpdating && <span className="text-blue-500">↻</span>}
           </h1>
           <div className="text-muted-foreground mt-1">
             <EditableText
               multiline
-              onChange={(description) => updateBook({ description })}
+              onChange={(description) => handleUpdateBook({ description })}
               placeholder="Kitap açıklaması ekleyin..."
               value={book.description || ""}
             />

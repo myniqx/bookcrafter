@@ -7,7 +7,7 @@ import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { goToBook, goToChapter, goToEntity, goToProject } from "@/lib/utils/navigateTo"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore, useCurrentBookStore, useEntitiesStore } from "@/lib/stores"
 
 interface BreadcrumbItem {
   label: string
@@ -16,11 +16,17 @@ interface BreadcrumbItem {
 
 
 export function BreadcrumbNavigation() {
-  const { getBook, getChapter, getEntity, project } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { book, getChapter } = useCurrentBookStore()
+  const { getEntity } = useEntitiesStore()
   const { bookSlug, chapterSlug, entitySlug } = useParams()
-  const book = bookSlug && getBook(bookSlug as string)
-  const chapter = bookSlug && chapterSlug && getChapter(bookSlug as string, chapterSlug as string)
-  const entity = getEntity(entitySlug as string)
+  
+  const chapter = bookSlug && chapterSlug && getChapter(chapterSlug as string)
+  const entity = entitySlug && getEntity(entitySlug as string)
+
+  if (!project) {
+    return null
+  }
 
   const items: BreadcrumbItem[] = [{
     href: goToProject({ project }),

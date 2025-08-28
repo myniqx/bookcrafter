@@ -14,19 +14,17 @@ export interface ProjectImage {
   createdAt: string
 }
 
-export interface ProjectBase {
-  slug: string
-  name: string
-  updatedAt: string
-}
 
 // Project metadata interface for provider state management
-export interface ProjectMetadata extends ProjectBase {
+export interface ProjectMetadata {
   description?: string
   createdAt: string
   adapterType: AdapterType
   coverImageId?: string
   backgroundImageId?: string
+  slug: string
+  name: string
+  updatedAt: string
 }
 
 export interface Project {
@@ -58,7 +56,7 @@ export interface Chapter {
   createdAt: string
   updatedAt: string
   imageIds?: string[]
-  bookSlug?: string 
+  bookSlug?: string
 }
 
 export type EntityType = "character" | "location" | "item" | "event"

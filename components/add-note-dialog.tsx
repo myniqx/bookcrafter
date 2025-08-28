@@ -21,7 +21,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { generateId } from "@/lib/utils"
 import { DialogClose } from "@radix-ui/react-dialog"
 import { useLanguage } from "@/contexts/language-context"
-import { useEntity } from "@/providers/entity-provider"
+import { useEntitiesStore } from "@/lib/stores"
+import { useParams } from "next/navigation"
 import { useToast } from "./ui/use-toast"
 
 
@@ -32,7 +33,12 @@ export function AddNoteDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { t } = useLanguage()
-  const { entity, saveProject, updateEntity } = useEntity()
+  const { entitySlug } = useParams()
+  const { getEntity, updateEntity: updateEntityInStore } = useEntitiesStore()
+  
+  const entity = getEntity(entitySlug as string)
+  const saveProject = () => console.warn('Save project not implemented')
+  const updateEntity = (updates: any) => updateEntityInStore(entitySlug as string, updates)
   const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {

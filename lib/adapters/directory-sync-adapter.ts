@@ -1,4 +1,4 @@
-import type { Project, ProjectBase } from "../types"
+import type { Project, ProjectMetadata } from "../types"
 import type { StorageAdapter } from "./adapter"
 
 export class DirectorySyncAdapter implements StorageAdapter {
@@ -68,12 +68,8 @@ export class DirectorySyncAdapter implements StorageAdapter {
     }
   }
 
-  async getProjects(): Promise<ProjectBase[]> {
-    return Array.from(this.projectsCache.values()).map((project) => ({
-      name: project.metadata.name,
-      slug: project.metadata.slug,
-      updatedAt: project.metadata.updatedAt,
-    }))
+  async getProjects(): Promise<ProjectMetadata[]> {
+    return Array.from(this.projectsCache.values()).map((project) => project.metadata)
   }
 
   async loadProject(slug: string): Promise<Project | null> {

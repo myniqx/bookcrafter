@@ -7,11 +7,14 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import { goToChapter } from "@/lib/utils/navigateTo"
-import { useChapter } from "@/providers/chapter-provider"
+import { useCurrentChapterStore, useCurrentBookStore, useCurrentProjectStore } from "@/lib/stores"
 
 
 export function ChapterHeader() {
-  const { book, chapter, hasUnsavedChanges, project } = useChapter();
+  const { chapter } = useCurrentChapterStore()
+  const { book } = useCurrentBookStore()
+  const { metadata: project } = useCurrentProjectStore()
+  const hasUnsavedChanges = useCurrentChapterStore(state => state.hasUnsavedChanges)
   const backLink = goToChapter({ book, project })
 
   return (

@@ -21,8 +21,6 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { useProjects } from "@/hooks/use-projects"
-import { slugify } from "@/lib/utils"
-import { goToProject } from "@/lib/utils/navigateTo"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -51,26 +49,21 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
     setError(null)
 
     try {
-      const now = new Date().toISOString()
-      const slug = slugify(trimmedName)
-
-      await createProject({
-        books: [],
-        chapters: [],
-        entities: [],
-        images: [],
-        metadata: {
-          adapterType,
-          createdAt: now,
-          description: description.trim() || undefined,
-          name: trimmedName,
-          slug,
-          updatedAt: now
-        }
+      const project = await createProject({
+        name: trimmedName,
+        description: description.trim() || undefined,
+        adapterType
       })
 
+      // Reset form
+      setName("")
+      setDescription("")
+      setError(null)
+
       onOpenChange(false)
-      goToProject({ project: { slug }, router })
+
+      // Navigate to project
+      router.push(`/${project.metadata.slug}/project`)
     } catch (err) {
       console.error("Proje oluşturulurken hata oluştu:", err)
       setError("Proje oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.")

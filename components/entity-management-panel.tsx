@@ -13,14 +13,14 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { useLanguage } from "@/contexts/language-context"
-import { useChapter } from "@/providers/chapter-provider"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentChapterStore, useCurrentBookStore, useCurrentProjectStore, useEntitiesStore } from "@/lib/stores"
+import { useEntitiesActions } from "@/hooks/use-entities-actions"
 import { CreateEntityForm } from "./create-entity-form"
 
 
 export function EntityManagementPanel() {
   const [activeTab, setActiveTab] = useState<EntityType>("character")
-  const { entities } = useChapter()
+  const { entities } = useEntitiesStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
   const { t } = useLanguage()
@@ -119,7 +119,8 @@ interface EntityCardProps {
 
 function EntityCard({ entity }: EntityCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const { book, chapter } = useChapter()
+  const { book } = useCurrentBookStore()
+  const { chapter } = useCurrentChapterStore()
 
   // Filter notes that are not completed or completed in this chapter
   const relevantNotes =
@@ -170,14 +171,15 @@ interface NoteItemProps {
 }
 
 function NoteItem({ bookId, chapterId, entity, note }: NoteItemProps) {
-  const { updateEntity } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { updateEntity } = useEntitiesActions(project.slug)
   const isCompletedHere =
     note.completed &&
     note.completedIn?.bookId === bookId &&
     note.completedIn?.chapterId === chapterId
 
-  const onComplete = (completed: boolean) => {
-    updateEntity(entity.slug, {
+  const onComplete = async (completed: boolean) => {
+    const updatedEntity = {
       ...entity,
       notes: entity.notes?.map((n) =>
         n.id === note.id
@@ -190,7 +192,9 @@ function NoteItem({ bookId, chapterId, entity, note }: NoteItemProps) {
           }
           : n
       ),
-    })
+    }
+    
+    await updateEntity(updatedEntity)
   }
 
   return (

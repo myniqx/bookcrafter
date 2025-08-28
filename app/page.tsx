@@ -24,10 +24,16 @@ export default function Home() {
   const { t } = useLanguage()
   const router = useRouter()
   const { createProject } = useProjects()
-  const mockProject = () => {
+  const mockProject = async () => {
     const mock = generateMock()
-    createProject(mock)
-    goToProject({ project: { slug: mock.metadata.slug }, router })
+    const createdProject = await createProject({
+      adapterType: mock.metadata.adapterType,
+      description: mock.metadata.description,
+      name: mock.metadata.name
+    })
+    if (createdProject) {
+      goToProject({ project: { slug: createdProject.metadata.slug }, router })
+    }
   }
 
   return (

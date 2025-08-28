@@ -1,4 +1,4 @@
-import type { Project, ProjectBase } from "../types"
+import type { Project, ProjectMetadata } from "../types"
 
 import { CompressedFileAdapter } from "./compressed-file-adapter"
 import { DirectorySyncAdapter } from "./directory-sync-adapter"
@@ -10,7 +10,7 @@ export interface StorageAdapter {
   type: string
   saveProject: (project: Project) => Promise<boolean>
   loadProject: (slug: string) => Promise<Project | null>
-  getProjects: () => Promise<ProjectBase[]>
+  getProjects: () => Promise<ProjectMetadata[]>
   deleteProject: (slug: string) => Promise<boolean>
 }
 

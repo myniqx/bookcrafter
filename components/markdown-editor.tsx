@@ -7,12 +7,11 @@ import type { Entity } from "@/lib/types"
 
 import { Textarea } from "@/components/ui/textarea"
 
-import { useChapter } from "@/providers/chapter-provider"
+import { useCurrentChapterStore } from "@/lib/stores"
 import { Save } from "lucide-react"
+import { AIPromptDropdown } from "./ai-prompt-dropdown"
 import { EntityBadgesList } from "./entity-badges-list"
 import { Button } from "./ui/button"
-import { AIPromptDropdown } from "./ai-prompt-dropdown"
-import { EntitySuggestion, EntitySuggestions } from "./entity-suggestions"
 
 // Constants
 const SUGGESTION_LIMIT = 10
@@ -79,7 +78,13 @@ export function MarkdownEditor({
   onChange,
   onProcessedContentChange,
 }: MarkdownEditorProps) {
-  const { book, chapter, entities, saveProject, setEntities, updateChapter } = useChapter()
+  const { chapter } = useCurrentChapterStore()
+  // TODO: Implement full chapter management with new store pattern
+  const book = null
+  const entities: Entity[] = []
+  const saveProject = () => console.warn('Save project not implemented')
+  const setEntities = (entities: Entity[]) => console.warn('Set entities not implemented')
+  const updateChapter = (updates: any) => console.warn('Update chapter not implemented')
 
   // State
   const [showEntitySuggestions, setShowEntitySuggestions] = useState(false)

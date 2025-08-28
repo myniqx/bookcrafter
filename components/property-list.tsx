@@ -9,11 +9,21 @@ import type { EntityProperty } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useEntity } from "@/providers/entity-provider"
+import { useEntitiesStore } from "@/lib/stores"
+import { useParams } from "next/navigation"
 
 
 export function PropertyList() {
-  const { entity, saveProject, updateEntity } = useEntity()
+  const { entitySlug } = useParams()
+  const { getEntity } = useEntitiesStore()
+  
+  const entity = getEntity(entitySlug as string)
+  const saveProject = () => console.warn('Save project not implemented')
+  const updateEntity = (updates: any) => console.warn('Update entity not implemented')
+  
+  if (!entity) {
+    return <div>Entity not found</div>
+  }
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
 

@@ -6,10 +6,11 @@ import { ChapterList } from "@/components/chapter-list"
 import { EntityBadgesList } from "@/components/entity-badges-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
-import { useBook } from "@/providers/book-provider"
+import { useCurrentBookStore, useEntitiesStore } from "@/lib/stores"
 
 export default function BookPage() {
-  const { chapters, entities } = useBook()
+  const { chapters } = useCurrentBookStore()
+  const { entities } = useEntitiesStore()
   const [usedEntities, setUsedEntities] = useState<Entity[]>([])
   const [entityCounts, setEntityCounts] = useState<Record<string, number>>({})
   const { t } = useLanguage()

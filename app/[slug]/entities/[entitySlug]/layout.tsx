@@ -1,8 +1,7 @@
 "use client"
 import React, { Usable } from "react"
 
-import { EntityProvider } from "@/providers/entity-provider"
-
+// EntityProvider removed - using stores and hooks instead
 
 const EntitiesLayout = ({ children, params }: {
   children: React.ReactNode,
@@ -10,11 +9,10 @@ const EntitiesLayout = ({ children, params }: {
 }) => {
   const { entitySlug } = React.use(params)
 
-  return (
-    <EntityProvider entitySlug={entitySlug}>
-      {children}
-    </EntityProvider>
-  )
+  // TODO: Initialize entity data in store based on entitySlug
+  console.log('Entity layout for slug:', entitySlug)
+
+  return children
 }
 
 export default EntitiesLayout

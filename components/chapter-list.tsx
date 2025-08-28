@@ -5,7 +5,8 @@ import Link from "next/link"
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
-import { useBook } from "@/providers/book-provider"
+import { useCurrentBookStore, useCurrentProjectStore } from "@/lib/stores"
+import { useProjectQuery, useSaveProjectMutation } from "@/hooks/queries/use-project-query"
 
 import { CreateChapterDialog } from "./create-chapter-dialog"
 import { EditableText } from "./editable-text"
@@ -13,7 +14,23 @@ import { goToChapter } from "@/lib/utils/navigateTo"
 
 
 export function ChapterList() {
-  const { book, chapters, project, updateChapter } = useBook()
+  const { book, chapters } = useCurrentBookStore()
+  const { metadata: project } = useCurrentProjectStore()
+  const { data: fullProject } = useProjectQuery(project?.slug || '')
+  const saveProjectMutation = useSaveProjectMutation()
+  
+  const updateChapter = async (chapterSlug: string, updates: any) => {
+    if (!fullProject) return
+    
+    const updatedProject = {
+      ...fullProject,
+      chapters: fullProject.chapters.map(chapter => 
+        chapter.slug === chapterSlug ? { ...chapter, ...updates, updatedAt: new Date().toISOString() } : chapter
+      )
+    }
+    
+    await saveProjectMutation.mutateAsync(updatedProject)
+  }
   const { t } = useLanguage()
 
   if (!chapters) {

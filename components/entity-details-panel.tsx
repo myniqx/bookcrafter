@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { goToChapter } from "@/lib/utils/navigateTo"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
 
 interface EntityDetailsPanelProps {
   entity: Entity | null
@@ -16,7 +16,7 @@ interface EntityDetailsPanelProps {
 }
 
 export function EntityDetailsPanel({ entity }: EntityDetailsPanelProps) {
-  const { project } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
 
   if (!entity) {
     return (

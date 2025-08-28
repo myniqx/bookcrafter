@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
-import { useSearchParams } from "next/navigation"
-
+import { useParams, useSearchParams } from "next/navigation"
 
 import { AddNoteDialog } from "@/components/add-note-dialog"
 import { AddPropertyDialog } from "@/components/add-property-dialog"
@@ -14,13 +12,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UsageList } from "@/components/usage-list"
 import { useLanguage } from "@/contexts/language-context"
-import { useEntity } from "@/providers/entity-provider"
+import { useCurrentProjectStore, useCurrentEntityStore } from "@/lib/stores"
+import { useProjectQuery } from "@/hooks/queries/use-project-query"
+import { useEntitiesActions } from "@/hooks/use-entities-actions"
+import { useDebouncedEntitySave } from "@/hooks/queries/use-entity-query"
 
 export default function EntityPage() {
   const searchParams = useSearchParams()
-  const { entity, getBook, getChapter, hasUnsavedChanges, updateEntity } = useEntity()
+  const { entitySlug, slug: projectSlug } = useParams()
+  
+  const { metadata: project } = useCurrentProjectStore()
+  const { entity } = useCurrentEntityStore()
+  const { data: fullProject, isLoading } = useProjectQuery(project?.slug || '')
+  const { updateEntity, isUpdating } = useEntitiesActions(project?.slug || '')
+  const { save: saveEntity, isSaving } = useDebouncedEntitySave(
+    project?.slug || '', 
+    entitySlug as string,
+    1000 // 1 second debounce
+  )
+  
   const [activeTab, setActiveTab] = useState("properties")
   const { t } = useLanguage()
+
+  const getBook = (bookSlug: string) => fullProject?.books.find(b => b.slug === bookSlug) || null
+  const getChapter = (bookSlug: string, chapterSlug: string) => 
+    fullProject?.chapters.find(c => c.bookSlug === bookSlug && c.slug === chapterSlug) || null
 
   // Set active tab based on URL params
   useEffect(() => {
@@ -32,13 +48,22 @@ export default function EntityPage() {
     }
   }, [searchParams])
 
-  // Handle entity name and description changes
+  // Handle entity name and description changes with autosave
   const handleEntityNameChange = (name: string) => {
-    updateEntity({ name })
+    saveEntity({ name })
   }
 
   const handleEntityDescriptionChange = (description: string) => {
-    updateEntity({ description })
+    saveEntity({ description })
+  }
+
+  // Loading states
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64">Loading entity...</div>
+  }
+
+  if (!entity) {
+    return <div className="flex items-center justify-center h-64">Entity not found</div>
   }
 
   // Get book and chapter titles for usages
@@ -69,7 +94,7 @@ export default function EntityPage() {
               onChange={handleEntityNameChange}
               value={entity.name}
             />
-            {hasUnsavedChanges && <span className="text-red-500">*</span>}
+            {(isSaving || isUpdating) && <span className="text-blue-500">↻</span>}
           </h1>
 
           <div className="flex items-center gap-2 text-muted-foreground">

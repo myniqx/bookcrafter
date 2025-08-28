@@ -1,8 +1,7 @@
 "use client"
 import React, { Usable } from "react"
 
-import { BookProvider } from "@/providers/book-provider"
-
+// BookProvider removed - using stores and hooks instead
 
 const BookLayout = ({ children, params }: {
   children: React.ReactNode,
@@ -10,11 +9,10 @@ const BookLayout = ({ children, params }: {
 }) => {
   const { bookSlug } = React.use(params)
 
-  return (
-    <BookProvider bookSlug={bookSlug}>
-      {children}
-    </BookProvider>
-  )
+  // TODO: Initialize book data in store based on bookSlug
+  console.log('Book layout for slug:', bookSlug)
+
+  return children
 }
 
 export default BookLayout

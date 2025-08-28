@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { generateId, slugify } from "@/lib/utils"
-import { useProject } from "@/providers/project-provider"
 import { useLanguage } from "@/contexts/language-context"
+import { generateId, slugify } from "@/lib/utils"
+import { useEntitiesActions } from "@/hooks/use-entities-actions"
+import { useCurrentProjectStore } from "@/lib/stores"
 
 interface CreateEntityFormProps {
   entityType: EntityType
@@ -24,7 +25,8 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { addEntity } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { addEntity, isAdding } = useEntitiesActions(project.slug)
   const { t } = useLanguage()
 
   // Update slug when name changes
@@ -97,7 +99,7 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!name.trim()) {
@@ -128,7 +130,7 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
         usages: [],
       }
 
-      addEntity(newEntity)
+      await addEntity(newEntity)
 
       // Reset form
       setName("")
@@ -152,15 +154,14 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
         <Input
           id="name"
           onChange={(e) => setName(e.target.value)}
-          placeholder={`Örn: ${
-            entityType === "character"
+          placeholder={`Örn: ${entityType === "character"
               ? "Ayşe Yılmaz"
               : entityType === "location"
                 ? "Büyük Kale"
                 : entityType === "item"
                   ? "Sihirli Kılıç"
                   : "Büyük Savaş"
-          }`}
+            }`}
           value={name}
         />
       </div>
@@ -196,11 +197,11 @@ export function CreateEntityForm({ entityType, onCancel }: CreateEntityFormProps
       {error && <div className="text-sm font-medium text-destructive">{error}</div>}
 
       <div className="flex justify-end gap-2">
-        <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="outline">
+        <Button disabled={isSubmitting || isAdding} onClick={onCancel} type="button" variant="outline">
           {t("cancel")}
         </Button>
-        <Button disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("creating") : t("create")}
+        <Button disabled={isSubmitting || isAdding} type="submit">
+          {isSubmitting || isAdding ? t("creating") : t("create")}
         </Button>
       </div>
     </form>

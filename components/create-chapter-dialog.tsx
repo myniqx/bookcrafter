@@ -21,7 +21,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useLanguage } from "@/contexts/language-context"
 import { slugify } from "@/lib/utils"
-import { useBook } from "@/providers/book-provider"
+import { useCurrentBookStore, useCurrentProjectStore } from "@/lib/stores"
+import { useProjectQuery, useSaveProjectMutation } from "@/hooks/queries/use-project-query"
 
 
 export function CreateChapterDialog() {
@@ -31,9 +32,12 @@ export function CreateChapterDialog() {
   const [number, setNumber] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { addChapter, chapters } = useBook()
+  const { book, chapters } = useCurrentBookStore()
+  const { metadata: project } = useCurrentProjectStore()
+  const { data: fullProject } = useProjectQuery(project?.slug || '')
+  const saveProjectMutation = useSaveProjectMutation()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const trimmedTitle = title.trim()
@@ -87,7 +91,16 @@ export function CreateChapterDialog() {
         updatedAt: now,
       }
 
-      addChapter(newChapter)
+      if (!fullProject || !book) {
+        throw new Error('Project or book not loaded')
+      }
+      
+      const updatedProject = {
+        ...fullProject,
+        chapters: [...fullProject.chapters, { ...newChapter, bookSlug: book.slug }]
+      }
+      
+      await saveProjectMutation.mutateAsync(updatedProject)
 
       // Reset form
       setTitle("")

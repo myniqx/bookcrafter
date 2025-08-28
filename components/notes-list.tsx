@@ -11,11 +11,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDate } from "@/lib/utils"
-import { useEntity } from "@/providers/entity-provider"
+import { useEntitiesStore, useCurrentProjectStore } from "@/lib/stores"
+import { useParams } from "next/navigation"
 
 
 export function NotesList() {
-  const { entity, project, saveProject, updateEntity } = useEntity()
+  const { entitySlug } = useParams()
+  const { getEntity } = useEntitiesStore()
+  const { metadata: project } = useCurrentProjectStore()
+  
+  const entity = getEntity(entitySlug as string)
+  const saveProject = () => console.warn('Save project not implemented')
+  const updateEntity = (updates: any) => console.warn('Update entity not implemented')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editContent, setEditContent] = useState("")

@@ -18,7 +18,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { generateId } from "@/lib/utils"
-import { useEntity } from "@/providers/entity-provider"
+import { useEntitiesStore } from "@/lib/stores"
+import { useParams } from "next/navigation"
 import { useToast } from "./ui/use-toast"
 import { DialogClose } from "@radix-ui/react-dialog"
 import { useLanguage } from "@/contexts/language-context"
@@ -30,9 +31,18 @@ export function AddPropertyDialog() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [open, onOpenChange] = useState(false)
-  const { entity, saveProject, updateEntity } = useEntity()
+  const { entitySlug } = useParams()
+  const { getEntity, updateEntity: updateEntityInStore } = useEntitiesStore()
+  
+  const entity = getEntity(entitySlug as string)
+  const saveProject = () => console.warn('Save project not implemented')
+  const updateEntity = (updates: any) => updateEntityInStore(entitySlug as string, updates)
   const { toast } = useToast()
   const { t } = useLanguage()
+  if (!entity) {
+    return null
+  }
+  
   const properties = entity.properties || []
 
   const handleSubmit = (e: React.FormEvent) => {

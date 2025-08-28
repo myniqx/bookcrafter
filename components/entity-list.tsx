@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore, useEntitiesStore } from "@/lib/stores"
 
 import { useLanguage } from "@/contexts/language-context"
 import { goToEntity } from "@/lib/utils/navigateTo"
@@ -24,7 +24,8 @@ export function EntityList({ activeType, onTypeChange }: {
 }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const { entities, project } = useProject()
+  const { entities } = useEntitiesStore()
+  const { metadata: project } = useCurrentProjectStore()
   const { t } = useLanguage()
 
   const filteredEntities = entities

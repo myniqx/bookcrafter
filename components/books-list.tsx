@@ -1,19 +1,44 @@
 "use client"
-import { BookOpen } from "lucide-react"
+import { BookOpen, Plus } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
-import { goToBook } from "@/lib/utils/navigateTo"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
+import { useProjectQuery } from "@/hooks/queries/use-project-query"
+import { useBookActions } from "@/hooks/use-book-actions"
 
 import { CreateBookDialog } from "./create-book-dialog"
 import { EditableText } from "./editable-text"
 
 export function BooksList() {
   const { t } = useLanguage()
-  const { books, getChaptersForBook, project, updateBook } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { data: fullProject, isLoading } = useProjectQuery(project?.slug || '')
+  const { updateBook, isUpdating } = useBookActions(project?.slug || '')
+  
+  const books = fullProject?.books || []
+  const getChaptersForBook = (bookSlug: string) => {
+    return fullProject?.chapters.filter(chapter => chapter.bookSlug === bookSlug) || []
+  }
+  
+  if (!project) {
+    return <div className="flex items-center justify-center h-32">Loading...</div>
+  }
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-32">Loading books...</div>
+  }
+
+  const handleUpdateBook = async (bookSlug: string, updates: any) => {
+    try {
+      await updateBook(bookSlug, updates)
+    } catch (error) {
+      console.error('Failed to update book:', error)
+    }
+  }
 
   if (books.length === 0) {
     return (
@@ -41,13 +66,13 @@ export function BooksList() {
                 <div className="flex items-center gap-2">
                   <EditableText
                     className="flex-1"
-                    onChange={(value) => updateBook(book.slug, { title: value })}
+                    onChange={(value) => handleUpdateBook(book.slug, { title: value })}
                     value={book.title || t("untitled_book")}
                   />
                 </div>
                 <div>
                   <EditableText
-                    onChange={(value) => updateBook(book.slug, { description: value })}
+                    onChange={(value) => handleUpdateBook(book.slug, { description: value })}
                     placeholder={t("add_description")}
                     value={book.description || t("no_description")}
                   />

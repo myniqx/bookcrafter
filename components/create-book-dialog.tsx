@@ -22,10 +22,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useLanguage } from "@/contexts/language-context"
 import { slugify } from "@/lib/utils"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
+import { useProjectQuery, useSaveProjectMutation } from "@/hooks/queries/use-project-query"
 
 export function CreateBookDialog() {
-  const { addBook, books } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { data: fullProject } = useProjectQuery(project?.slug || '')
+  const saveProjectMutation = useSaveProjectMutation()
+  
+  const books = fullProject?.books || []
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -34,7 +39,7 @@ export function CreateBookDialog() {
 
   const bookExist = books.length > 0
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const trimmedTitle = title.trim()
@@ -65,7 +70,16 @@ export function CreateBookDialog() {
         updatedAt: now,
       }
 
-      addBook(newBook)
+      if (!fullProject) {
+        throw new Error('Project not loaded')
+      }
+      
+      const updatedProject = {
+        ...fullProject,
+        books: [...fullProject.books, newBook]
+      }
+      
+      await saveProjectMutation.mutateAsync(updatedProject)
 
       // Reset form
       setTitle("")

@@ -31,7 +31,7 @@ import { generateTextDiff } from "@/lib/utils/text-diff"
 
 import { AISettingsDialog } from "./ai-settings-dialog"
 import { AITextDiffModal } from "./ai-text-diff-modal"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore, useEntitiesStore } from "@/lib/stores"
 
 interface AIPromptDropdownProps {
   selectedText: string
@@ -46,7 +46,14 @@ export function AIPromptDropdown({
   onTextReplace,
   selectedText,
 }: AIPromptDropdownProps) {
-  const { aiSettings, entities, project, updateAISettings } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { entities } = useEntitiesStore()
+  
+  // TODO: Implement AI settings management with new store pattern
+  const aiSettings = undefined
+  const updateAISettings = (settings: AISettings) => {
+    console.warn('AI settings update not implemented with new store pattern')
+  }
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
   const [customPrompt, setCustomPrompt] = useState("")
   const [settingsOpen, setSettingsOpen] = useState(false)

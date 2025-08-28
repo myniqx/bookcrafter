@@ -4,7 +4,8 @@ import { Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
+import { useProjectQuery } from "@/hooks/queries/use-project-query"
 
 interface ExportButtonProps {
   hasUnsavedChanges: boolean
@@ -12,11 +13,14 @@ interface ExportButtonProps {
 }
 
 export function ExportButton({ hasUnsavedChanges, onSave }: ExportButtonProps) {
-  const { project } = useProject()
+  const { metadata: projectMetadata } = useCurrentProjectStore()
+  const { data: fullProject } = useProjectQuery(projectMetadata?.slug || '')
+  
+  const project = fullProject || { name: projectMetadata?.name || '', slug: projectMetadata?.slug || '' }
   const { toast } = useToast()
 
   const handleExport = async () => {
-    if (!project) return
+    if (!projectMetadata || !fullProject) return
 
     // If there are unsaved changes, save first
     if (hasUnsavedChanges) {

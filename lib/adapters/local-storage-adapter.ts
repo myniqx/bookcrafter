@@ -1,4 +1,4 @@
-import type { Project, ProjectBase } from "@/lib/types"
+import type { Project, ProjectMetadata } from "@/lib/types"
 
 import { StorageAdapter } from "./adapter"
 
@@ -17,7 +17,7 @@ export class LocalStorageAdapter implements StorageAdapter {
   }
 
   // Get all projects (just IDs and basic info)
-  async getProjects(): Promise<ProjectBase[]> {
+  async getProjects(): Promise<ProjectMetadata[]> {
     if (typeof window === "undefined") return []
 
     try {
@@ -55,17 +55,9 @@ export class LocalStorageAdapter implements StorageAdapter {
       const existingIndex = projects.findIndex((p) => p.slug === project.metadata.slug)
 
       if (existingIndex >= 0) {
-        projects[existingIndex] = {
-          name: project.metadata.name,
-          slug: project.metadata.slug,
-          updatedAt: project.metadata.updatedAt,
-        }
+        projects[existingIndex] = project.metadata
       } else {
-        projects.push({
-          name: project.metadata.name,
-          slug: project.metadata.slug,
-          updatedAt: project.metadata.updatedAt,
-        })
+        projects.push(project.metadata)
       }
 
       localStorage.setItem(this.PROJECTS_KEY, JSON.stringify(projects))

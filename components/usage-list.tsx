@@ -4,7 +4,7 @@ import Link from "next/link"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { EntityUsage } from "@/lib/types"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
 import { goToChapter } from "@/lib/utils/navigateTo"
 
 interface Usage extends EntityUsage {
@@ -17,8 +17,9 @@ interface UsageListProps {
 }
 
 export function UsageList({ usages }: UsageListProps) {
-  const { project } = useProject()
-  if (usages.length === 0) {
+  const { metadata: project } = useCurrentProjectStore()
+  
+  if (!project || usages.length === 0) {
     return <div className="text-center p-4 text-muted-foreground">Bu öğe henüz hiçbir bölümde kullanılmamış.</div>
   }
 

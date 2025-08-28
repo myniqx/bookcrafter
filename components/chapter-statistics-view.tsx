@@ -6,7 +6,7 @@ import Link from "next/link"
 import type { ChapterStatistics, Entity } from "@/lib/types"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useChapter } from "@/providers/chapter-provider"
+import { useCurrentChapterStore, useCurrentProjectStore, useEntitiesStore } from "@/lib/stores"
 import { goToEntity } from "@/lib/utils/navigateTo"
 
 interface ChapterStatisticsViewProps {
@@ -16,7 +16,11 @@ interface ChapterStatisticsViewProps {
 export function ChapterStatisticsView({
   statistics,
 }: ChapterStatisticsViewProps) {
-  const { book, chapter, entities, project } = useChapter()
+  const { chapter } = useCurrentChapterStore()
+  const { metadata: project } = useCurrentProjectStore()
+  const { entities } = useEntitiesStore()
+  
+  const book = null // TODO: Get book from current book store if needed
 
   if (!statistics) return null
 

@@ -235,6 +235,18 @@ const translations: Record<Language, typeof tr> = {
     locations: "Locations",
     items: "Items",
     events: "Events",
+    confirm: "",
+    status: "",
+    unsaved_changes: "",
+    unsaved_changes_message: "",
+    create_new_book: "",
+    chapter_created: "",
+    chapter_created_description: "",
+    add_new_chapter: "",
+    book_statistics: "",
+    chapter_count: "",
+    used_items: "",
+    images_tab: ""
   },
 }
 

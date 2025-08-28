@@ -11,10 +11,12 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChapterStatistics, Entity } from "@/lib/types"
-import { useChapter } from "@/providers/chapter-provider"
+import { useCurrentChapterStore, useEntitiesStore, useCurrentProjectStore } from "@/lib/stores"
 
 export default function ChapterPage() {
-  const { chapter, entities, project } = useChapter()
+  const { chapter } = useCurrentChapterStore()
+  const { entities } = useEntitiesStore()
+  const { metadata: project } = useCurrentProjectStore()
 
   const [content, setContent] = useState("")
   const [originalContent, setOriginalContent] = useState("")

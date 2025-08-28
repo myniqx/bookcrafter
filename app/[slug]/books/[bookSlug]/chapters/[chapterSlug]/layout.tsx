@@ -1,8 +1,7 @@
 import React from "react";
 import { Usable } from "react";
 
-import { ChapterProvider } from "@/providers/chapter-provider";
-
+// ChapterProvider removed - using stores and hooks instead
 
 const ChapterLayout = (
   {
@@ -16,11 +15,10 @@ const ChapterLayout = (
 ) => {
   const { chapterSlug } = React.use(params)
 
-  return (
-    <ChapterProvider chapterSlug={chapterSlug}>
-      {children}
-    </ChapterProvider>
-  )
+  // TODO: Initialize chapter data in store based on chapterSlug
+  console.log('Chapter layout for slug:', chapterSlug)
+
+  return children
 }
 
 export default ChapterLayout

@@ -1,25 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: true,
-  skipTrailingSlashRedirect: true,
+  assetPrefix: process.env.NODE_ENV === 'production' ? './' : undefined,
   distDir: '.next',
   eslint: {
     ignoreDuringBuilds: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true
   },
-  assetPrefix: process.env.NODE_ENV === 'production' ? './' : '',
+  skipTrailingSlashRedirect: true,
+  trailingSlash: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        path: false,
         os: false,
+        path: false,
       }
     }
     return config

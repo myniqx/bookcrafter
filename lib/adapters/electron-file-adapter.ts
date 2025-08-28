@@ -1,4 +1,4 @@
-import type { Project, ProjectBase } from "../types"
+import type { Project, ProjectMetadata } from "../types"
 import type { StorageAdapter } from "./adapter"
 
 import { ELECTRON_PATHS } from "../constants"
@@ -34,47 +34,74 @@ export class ElectronFileAdapter implements StorageAdapter {
       throw new Error("Electron API not available")
     }
 
-    const homePath = await window.electronAPI.fileSystem.getHomePath()
-    this.basePath = window.electronAPI.fileSystem.joinPath(homePath, ELECTRON_PATHS.APP_FOLDER)
+    const homePathResult = await window.electronAPI.fs.getHomePath()
+    if (!homePathResult.success || !homePathResult.data) {
+      throw new Error("Failed to get home path")
+    }
+
+    const joinResult = await window.electronAPI.fs.joinPath(homePathResult.data, ELECTRON_PATHS.APP_FOLDER)
+    if (!joinResult.success || !joinResult.data) {
+      throw new Error("Failed to join paths")
+    }
+
+    this.basePath = joinResult.data
 
     // Ensure base directory exists
-    await window.electronAPI.fileSystem.ensureDir(this.basePath)
+    await window.electronAPI.fs.ensureDir(this.basePath)
 
     return this.basePath
   }
 
   private async getProjectsPath(): Promise<string> {
     const basePath = await this.getBasePath()
-    const projectsPath = window.electronAPI!.fileSystem.joinPath(basePath, ELECTRON_PATHS.PROJECTS_FOLDER)
-    await window.electronAPI!.fileSystem.ensureDir(projectsPath)
+    const joinResult = await window.electronAPI!.fs.joinPath(basePath, ELECTRON_PATHS.PROJECTS_FOLDER)
+    if (!joinResult.success || !joinResult.data) {
+      throw new Error("Failed to join projects path")
+    }
+    const projectsPath = joinResult.data
+
+    const ensureResult = await window.electronAPI!.fs.ensureDir(projectsPath)
+    if (!ensureResult.success) {
+      throw new Error(`Failed to ensure projects directory: ${ensureResult.error}`)
+    }
+
     return projectsPath
   }
 
   private async getProjectPath(slug: string): Promise<string> {
     const projectsPath = await this.getProjectsPath()
-    return window.electronAPI!.fileSystem.joinPath(projectsPath, slug)
+    const joinResult = await window.electronAPI!.fs.joinPath(projectsPath, slug)
+    if (!joinResult.success || !joinResult.data) {
+      throw new Error("Failed to join project path")
+    }
+    return joinResult.data
   }
 
-  async getProjects(): Promise<ProjectBase[]> {
+  async getProjects(): Promise<ProjectMetadata[]> {
     try {
       const projectsPath = await this.getProjectsPath()
-      const projectDirs = await window.electronAPI!.fileSystem.listDir(projectsPath)
+      const listResult = await window.electronAPI!.fs.listDir(projectsPath)
 
-      const projects = [] as ProjectBase[]
+      if (!listResult.success || !listResult.data) {
+        console.error("Failed to list projects directory:", listResult.error)
+        return []
+      }
+
+      const projectDirs = listResult.data
+      const projects = [] as ProjectMetadata[]
 
       for (const projectId of projectDirs) {
-        const projectPath = window.electronAPI!.fileSystem.joinPath(projectsPath, projectId)
-        const projectFilePath = window.electronAPI!.fileSystem.joinPath(projectPath, "project.json")
+        const projectPathResult = await window.electronAPI!.fs.joinPath(projectsPath, projectId)
+        if (!projectPathResult.success || !projectPathResult.data) continue
 
-        const projectData = await window.electronAPI!.fileSystem.readFile(projectFilePath)
-        if (projectData) {
+        const projectFilePath = await window.electronAPI!.fs.joinPath(projectPathResult.data, "project.json")
+        if (!projectFilePath.success || !projectFilePath.data) continue
+
+        const projectDataResult = await window.electronAPI!.fs.readFile(projectFilePath.data)
+        if (projectDataResult.success && projectDataResult.data) {
           try {
-            const project = JSON.parse(projectData) as Project
-            projects.push({
-              name: project.metadata.name,
-              slug: project.metadata.slug,
-              updatedAt: project.metadata.updatedAt,
-            } satisfies ProjectBase)
+            const project = JSON.parse(projectDataResult.data) as Project
+            projects.push(project.metadata)
           } catch (error) {
             console.error(`Error parsing project ${projectId}:`, error)
           }
@@ -84,35 +111,46 @@ export class ElectronFileAdapter implements StorageAdapter {
       return projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     } catch (error) {
       console.error("Error getting projects:", error)
-      return [] as ProjectBase[]
+      return [] as ProjectMetadata[]
     }
   }
 
   async loadProject(slug: string): Promise<Project | null> {
     try {
       const projectPath = await this.getProjectPath(slug)
-      const projectFilePath = window.electronAPI!.fileSystem.joinPath(projectPath, "project.json")
+      const projectFilePathResult = await window.electronAPI!.fs.joinPath(projectPath, "project.json")
 
-      const projectData = await window.electronAPI!.fileSystem.readFile(projectFilePath)
-      if (!projectData) return null
+      if (!projectFilePathResult.success || !projectFilePathResult.data) {
+        console.error("Failed to create project file path")
+        return null
+      }
 
-      const project = JSON.parse(projectData) as Project
+      const projectDataResult = await window.electronAPI!.fs.readFile(projectFilePathResult.data)
+      if (!projectDataResult.success || !projectDataResult.data) return null
+
+      const project = JSON.parse(projectDataResult.data) as Project
 
       // Load images if they exist
       if (project.images && project.images.length > 0) {
-        const imagesPath = window.electronAPI!.fileSystem.joinPath(projectPath, ELECTRON_PATHS.IMAGES_FOLDER)
+        const imagesPathResult = await window.electronAPI!.fs.joinPath(projectPath, ELECTRON_PATHS.IMAGES_FOLDER)
 
-        for (const image of project.images) {
-          const extension = image.mimeType.split("/")[1] || "jpg"
-          const imagePath = window.electronAPI!.fileSystem.joinPath(imagesPath, `${image.id}.${extension}`)
+        if (imagesPathResult.success && imagesPathResult.data) {
+          const imagesPath = imagesPathResult.data
 
-          try {
-            const imageData = await window.electronAPI!.fileSystem.readFile(imagePath)
-            if (imageData) {
-              image.data = `data:${image.mimeType};base64,${imageData}`
+          for (const image of project.images) {
+            const extension = image.mimeType.split("/")[1] || "jpg"
+            const imagePathResult = await window.electronAPI!.fs.joinPath(imagesPath, `${image.id}.${extension}`)
+
+            if (imagePathResult.success && imagePathResult.data) {
+              try {
+                const imageDataResult = await window.electronAPI!.fs.readFile(imagePathResult.data)
+                if (imageDataResult.success && imageDataResult.data) {
+                  image.data = `data:${image.mimeType};base64,${imageDataResult.data}`
+                }
+              } catch (imageError) {
+                console.warn(`Could not load image ${image.id}:`, imageError)
+              }
             }
-          } catch (imageError) {
-            console.warn(`Could not load image ${image.id}:`, imageError)
           }
         }
       }
@@ -127,7 +165,12 @@ export class ElectronFileAdapter implements StorageAdapter {
   async saveProject(project: Project): Promise<boolean> {
     try {
       const projectPath = await this.getProjectPath(project.metadata.slug)
-      await window.electronAPI!.fileSystem.ensureDir(projectPath)
+      const ensureResult = await window.electronAPI!.fs.ensureDir(projectPath)
+
+      if (!ensureResult.success) {
+        console.error("Failed to ensure project directory:", ensureResult.error)
+        return false
+      }
 
       // Prepare project data (without base64 image data)
       const projectData = {
@@ -140,27 +183,52 @@ export class ElectronFileAdapter implements StorageAdapter {
       }
 
       // Save project.json
-      const projectFilePath = window.electronAPI!.fileSystem.joinPath(projectPath, "project.json")
-      const success = await window.electronAPI!.fileSystem.writeFile(
-        projectFilePath,
+      const projectFilePathResult = await window.electronAPI!.fs.joinPath(projectPath, "project.json")
+      if (!projectFilePathResult.success || !projectFilePathResult.data) {
+        console.error("Failed to create project file path")
+        return false
+      }
+
+      const writeResult = await window.electronAPI!.fs.writeFile(
+        projectFilePathResult.data,
         JSON.stringify(projectData, null, 2),
       )
 
-      if (!success) return false
+      if (!writeResult.success) {
+        console.error("Failed to write project file:", writeResult.error)
+        return false
+      }
 
       // Save images
       if (project.images && project.images.length > 0) {
-        const imagesPath = window.electronAPI!.fileSystem.joinPath(projectPath, ELECTRON_PATHS.IMAGES_FOLDER)
-        await window.electronAPI!.fileSystem.ensureDir(imagesPath)
+        const imagesPathResult = await window.electronAPI!.fs.joinPath(projectPath, ELECTRON_PATHS.IMAGES_FOLDER)
+        if (!imagesPathResult.success || !imagesPathResult.data) {
+          console.error("Failed to create images path")
+          return false
+        }
+
+        const imagesPath = imagesPathResult.data
+        const ensureImagesResult = await window.electronAPI!.fs.ensureDir(imagesPath)
+        if (!ensureImagesResult.success) {
+          console.error("Failed to ensure images directory:", ensureImagesResult.error)
+          return false
+        }
 
         for (const image of project.images) {
           if (image.data) {
             const extension = image.mimeType.split("/")[1] || "jpg"
-            const imagePath = window.electronAPI!.fileSystem.joinPath(imagesPath, `${image.id}.${extension}`)
+            const imagePathResult = await window.electronAPI!.fs.joinPath(imagesPath, `${image.id}.${extension}`)
 
-            // Extract base64 data
-            const base64Data = image.data.split(",")[1]
-            await window.electronAPI!.fileSystem.writeFile(imagePath, base64Data)
+            if (imagePathResult.success && imagePathResult.data) {
+              // Extract base64 data
+              const base64Data = image.data.split(",")[1]
+              const writeImageResult = await window.electronAPI!.fs.writeFile(imagePathResult.data, base64Data)
+
+              if (!writeImageResult.success) {
+                console.error(`Failed to write image ${image.id}:`, writeImageResult.error)
+                // Continue with other images even if one fails
+              }
+            }
           }
         }
       }
@@ -175,7 +243,14 @@ export class ElectronFileAdapter implements StorageAdapter {
   async deleteProject(slug: string): Promise<boolean> {
     try {
       const projectPath = await this.getProjectPath(slug)
-      return await window.electronAPI!.fileSystem.deleteDir(projectPath)
+      const deleteResult = await window.electronAPI!.fs.deleteDir(projectPath)
+
+      if (!deleteResult.success) {
+        console.error(`Failed to delete project ${slug}:`, deleteResult.error)
+        return false
+      }
+
+      return true
     } catch (error) {
       console.error(`Error deleting project ${slug}:`, error)
       return false

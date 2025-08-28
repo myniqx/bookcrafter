@@ -26,11 +26,11 @@ import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { CompressedFileAdapter } from "@/lib/adapters/compressed-file-adapter"
 import { ExportManager } from "@/lib/export/export-manager"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore } from "@/lib/stores"
 
 
 export function ExportDialog() {
-  const { project } = useProject()
+  const project = useCurrentProjectStore(state => state.metadata)
   const [isOpen, onOpenChange] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportType, setExportType] = useState<"document" | "project">("document")

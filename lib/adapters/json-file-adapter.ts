@@ -1,4 +1,4 @@
-import type { Project, ProjectBase } from "../types"
+import type { Project, ProjectMetadata } from "../types"
 import type { StorageAdapter } from "./adapter"
 
 export class JsonFileAdapter implements StorageAdapter {
@@ -81,13 +81,9 @@ export class JsonFileAdapter implements StorageAdapter {
     return null
   }
 
-  async getProjects(): Promise<ProjectBase[]> {
+  async getProjects(): Promise<ProjectMetadata[]> {
     // For JSON file adapter, we can only list projects that are in the cache
-    return Array.from(this.projectsCache.values()).map((project) => ({
-      name: project.metadata.name,
-      slug: project.metadata.slug,
-      updatedAt: project.metadata.updatedAt,
-    }))
+    return Array.from(this.projectsCache.values()).map((project) => project.metadata)
   }
 
   async deleteProject(slug: string): Promise<boolean> {

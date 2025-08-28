@@ -2,16 +2,30 @@ import { Save } from "lucide-react"
 import { useParams } from "next/navigation"
 
 import { goToProject } from "@/lib/utils/navigateTo"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentChapterStore } from "@/lib/stores"
+import { useDebouncedChapterSave } from "@/hooks/queries/use-chapter-query"
 
 import { BreadcrumbNavigation } from "./breadcrumb-navigation"
 import { ExportDialog } from "./export-dialog"
 import { Button } from "./ui/button"
 
-
-
 export const HeaderNavigation = () => {
-  const { saveProject } = useProject()
+  const { slug: projectSlug, bookSlug, chapterSlug } = useParams()
+  const { chapter, content, isSaving } = useCurrentChapterStore()
+  
+  // Manual save functionality for current chapter
+  const { save: saveChapter } = useDebouncedChapterSave(
+    projectSlug as string,
+    bookSlug as string, 
+    chapterSlug as string,
+    0 // Immediate save
+  )
+  
+  const handleManualSave = () => {
+    if (chapter && content) {
+      saveChapter(content)
+    }
+  }
 
 
   return (
@@ -23,12 +37,13 @@ export const HeaderNavigation = () => {
         <div className="flex flex-row items-center space-x-4">
           <Button
             className="rounded-full"
-            onClick={() => saveProject()}
+            onClick={handleManualSave}
             size="icon"
-            title="Projeyi Kaydet"
-            variant="outline"
+            title={isSaving ? "Kaydediliyor..." : "Manuel Kaydet"}
+            variant={isSaving ? "secondary" : "outline"}
+            disabled={isSaving || !chapter}
           >
-            <Save className="h-4 w-4" />
+            <Save className={`h-4 w-4 ${isSaving ? 'animate-spin' : ''}`} />
           </Button>
           <ExportDialog />
         </div>

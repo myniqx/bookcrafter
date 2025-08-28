@@ -22,7 +22,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { useLanguage } from "@/contexts/language-context"
-import { useProject } from "@/providers/project-provider"
+import { useCurrentProjectStore, useCurrentChapterStore } from "@/lib/stores"
+import { useProjectQuery } from "@/hooks/queries/use-project-query"
 import { goToBook, goToProject } from "@/lib/utils/navigateTo"
 export function SidebarNavigation() {
   const pathname = usePathname()
@@ -30,7 +31,14 @@ export function SidebarNavigation() {
   const [openBooks, setOpenBooks] = useState(true)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
-  const { books, hasUnsavedChanges, project, saveProject } = useProject()
+  const { metadata: project } = useCurrentProjectStore()
+  const { data: fullProject } = useProjectQuery(project?.slug || '')
+
+  const books = fullProject?.books || []
+  const hasUnsavedChanges = useCurrentChapterStore(state => state.hasUnsavedChanges)
+  const saveProject = async () => {
+    console.warn('Save project not implemented with new store pattern')
+  }
   const { bookSlug, chapterSlug, slug } = useParams()
   const { t } = useLanguage()
 
@@ -59,6 +67,10 @@ export function SidebarNavigation() {
 
   const handleSave = () => {
     saveProject()
+  }
+
+  if (!project) {
+    return null
   }
 
   return (
