@@ -5,8 +5,6 @@ import { useState } from "react"
 
 import { useRouter } from "next/navigation"
 
-import type { AdapterType } from "@/lib/types"
-
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,9 +16,9 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { useProjects } from "@/hooks/use-projects"
+import { goToProject } from "@/lib/utils/navigateTo"
 
 interface CreateProjectDialogProps {
   open: boolean
@@ -32,7 +30,6 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
   const { createProject } = useProjects()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [adapterType, setAdapterType] = useState<AdapterType>("localStorage")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,8 +48,7 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
     try {
       const project = await createProject({
         name: trimmedName,
-        description: description.trim() || undefined,
-        adapterType
+        description: description.trim() || undefined
       })
 
       // Reset form
@@ -62,8 +58,8 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
 
       onOpenChange(false)
 
-      // Navigate to project
-      router.push(`/${project.metadata.slug}/project`)
+      // Navigate to project dashboard
+      goToProject({ project: { slug: project.metadata.slug }, router })
     } catch (err) {
       console.error("Proje oluşturulurken hata oluştu:", err)
       setError("Proje oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.")
@@ -79,7 +75,7 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
           <DialogHeader>
             <DialogTitle>Yeni Proje Oluştur</DialogTitle>
             <DialogDescription>
-              Yeni bir kitap yazma projesi oluşturun. Projenize bir isim verin ve veri saklama yöntemini seçin.
+              Yeni bir kitap yazma projesi oluşturun. Projenize bir isim verin ve yazmaya başlayın.
             </DialogDescription>
           </DialogHeader>
 
@@ -103,38 +99,6 @@ export function CreateProjectDialog({ onOpenChange, open }: CreateProjectDialogP
                 rows={3}
                 value={description}
               />
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Veri Saklama Yöntemi</Label>
-              <RadioGroup onValueChange={(value) => setAdapterType(value as AdapterType)} value={adapterType}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem id="localStorage" value="localStorage" />
-                  <Label htmlFor="localStorage">Tarayıcı Depolama (LocalStorage)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem id="jsonFile" value="jsonFile" />
-                  <Label htmlFor="jsonFile">JSON Dosyası (İndir/Yükle)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem id="compressedFile" value="compressedFile" />
-                  <Label htmlFor="compressedFile">Sıkıştırılmış Dosya (.bookcraft)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem id="directorySync" value="directorySync" />
-                  <Label htmlFor="directorySync">Klasör Senkronizasyonu</Label>
-                </div>
-              </RadioGroup>
-              <p className="text-xs text-muted-foreground mt-1">
-                {adapterType === "localStorage" &&
-                  "Veriler tarayıcınızda saklanır. Tarayıcı geçmişini temizlerseniz verileriniz kaybolabilir."}
-                {adapterType === "jsonFile" &&
-                  "Veriler JSON dosyası olarak bilgisayarınıza indirilir. Projeyi açmak için dosyayı manuel olarak yüklemeniz gerekir."}
-                {adapterType === "compressedFile" &&
-                  "Veriler resimlerle birlikte sıkıştırılmış .bookcraft dosyası olarak indirilir. Daha organize ve kompakt saklama."}
-                {adapterType === "directorySync" &&
-                  "Veriler seçtiğiniz klasöre otomatik olarak senkronize edilir. Modern tarayıcılarda desteklenir."}
-              </p>
             </div>
 
             {error && <div className="text-sm font-medium text-destructive">{error}</div>}

@@ -35,7 +35,6 @@ export function useProjects() {
     async (projectData: {
       name: string
       description?: string
-      adapterType?: string
     }) => {
       try {
         const now = new Date().toISOString()
@@ -48,7 +47,7 @@ export function useProjects() {
           entities: [],
           images: [],
           metadata: {
-            adapterType: projectData.adapterType as any || 'localStorage',
+            adapterType: 'localStorage', // Default adapter type - actual adapter is determined by HybridFileAdapter
             createdAt: now,
             description: projectData.description,
             name: projectData.name,

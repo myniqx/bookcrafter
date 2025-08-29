@@ -27,7 +27,6 @@ export default function Home() {
   const mockProject = async () => {
     const mock = generateMock()
     const createdProject = await createProject({
-      adapterType: mock.metadata.adapterType,
       description: mock.metadata.description,
       name: mock.metadata.name
     })

@@ -1,10 +1,9 @@
 "use client"
-import { BookOpen, Plus } from "lucide-react"
+import { BookOpen } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
 import { useCurrentProjectStore } from "@/lib/stores"
 import { useProjectQuery } from "@/hooks/queries/use-project-query"
@@ -12,18 +11,19 @@ import { useBookActions } from "@/hooks/use-book-actions"
 
 import { CreateBookDialog } from "./create-book-dialog"
 import { EditableText } from "./editable-text"
+import { goToBook } from "@/lib/utils/navigateTo"
 
 export function BooksList() {
   const { t } = useLanguage()
   const { metadata: project } = useCurrentProjectStore()
   const { data: fullProject, isLoading } = useProjectQuery(project?.slug || '')
-  const { updateBook, isUpdating } = useBookActions(project?.slug || '')
-  
+  const { isUpdating, updateBook } = useBookActions(project?.slug || '')
+
   const books = fullProject?.books || []
   const getChaptersForBook = (bookSlug: string) => {
     return fullProject?.chapters.filter(chapter => chapter.bookSlug === bookSlug) || []
   }
-  
+
   if (!project) {
     return <div className="flex items-center justify-center h-32">Loading...</div>
   }

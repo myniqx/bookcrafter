@@ -1,6 +1,8 @@
 "use client"
 import React, { Usable, useEffect } from "react"
 
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarNavigation } from "@/components/sidebar-navigation"
 import { useCurrentProjectStore } from "@/lib/stores"
 
 export default function ProjectLayout({
@@ -29,21 +31,17 @@ export default function ProjectLayout({
   }, [slug, setMetadata])
 
   return (
-    <div className="flex min-h-screen">
-      <div className="w-64 bg-muted/20 border-r">
-        <div className="p-4">
-          <h2 className="font-semibold">Navigation</h2>
-          <p className="text-sm text-muted-foreground">Project: {slug}</p>
+    <SidebarProvider>
+      <SidebarNavigation />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex-1" />
+        </header>
+        <div className="flex flex-1 flex-col">
+          {children}
         </div>
-      </div>
-      <div className="flex-1 overflow-auto">
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-14 items-center px-4">
-            <h1 className="font-semibold">BookCraft - {slug}</h1>
-          </div>
-        </div>
-        {children}
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
